@@ -1,0 +1,254 @@
+version: '3.8'
+
+# Production Docker Compose with optimizations
+services:
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mindful_ad_wizard
+      POSTGRES_USER: mindful_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--auth-host=md5"
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+      - ./backup:/backup
+    ports:
+      - "127.0.0.1:5432:5432"  # Only bind to localhost in production
+    networks:
+      - mindful_prod_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mindful_user -d mindful_ad_wizard"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+    command: >
+      postgres
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c work_mem=4MB
+      -c maintenance_work_mem=64MB
+      -c random_page_cost=1.1
+      -c temp_file_limit=2GB
+      -c log_min_duration_statement=1000
+      -c log_connections=on
+      -c log_disconnections=on
+      -c log_lock_waits=on
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+      --replica-read-only no
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_prod_data:/data
+    ports:
+      - "127.0.0.1:6379:6379"  # Only bind to localhost
+    networks:
+      - mindful_prod_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://mindful_user:${POSTGRES_PASSWORD}@postgres:5432/mindful_ad_wizard
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - META_APP_ID=${META_APP_ID}
+      - META_APP_SECRET=${META_APP_SECRET}
+      - META_ACCESS_TOKEN=${META_ACCESS_TOKEN}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_DEVELOPER_TOKEN=${GOOGLE_DEVELOPER_TOKEN}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - FROM_EMAIL=${FROM_EMAIL}
+      - FROM_NAME=${FROM_NAME}
+      - CLIENT_URL=${CLIENT_URL}
+      - PORT=5000
+      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
+      - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-100}
+    expose:
+      - "5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mindful_prod_network
+    volumes:
+      - backend_prod_logs:/app/logs
+      - backend_prod_uploads:/app/uploads
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/admin/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+      args:
+        - VITE_API_URL=${VITE_API_URL}
+    restart: unless-stopped
+    expose:
+      - "80"
+    networks:
+      - mindful_prod_network
+    volumes:
+      - frontend_prod_logs:/var/log/nginx
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - mindful_prod_network
+    volumes:
+      - nginx_prod_logs:/var/log/nginx
+      - nginx_certs:/etc/nginx/certs:ro
+      - nginx_conf:/etc/nginx/conf.d
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backup service for automated database backups
+  backup:
+    image: postgres:15-alpine
+    restart: "no"
+    environment:
+      - PGPASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - ./backup:/backup
+      - ./scripts:/scripts:ro
+    networks:
+      - mindful_prod_network
+    depends_on:
+      - postgres
+    command: |
+      sh -c '
+        while true; do
+          echo "Starting backup at $$(date)"
+          pg_dump -h postgres -U mindful_user -d mindful_ad_wizard > /backup/backup_$$(date +%Y%m%d_%H%M%S).sql
+          echo "Backup completed at $$(date)"
+          find /backup -name "backup_*.sql" -mtime +7 -delete
+          sleep 86400
+        done
+      '
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 128M
+
+volumes:
+  postgres_prod_data:
+    driver: local
+  redis_prod_data:
+    driver: local
+  backend_prod_logs:
+    driver: local
+  backend_prod_uploads:
+    driver: local
+  frontend_prod_logs:
+    driver: local
+  nginx_prod_logs:
+    driver: local
+  nginx_certs:
+    driver: local
+  nginx_conf:
+    driver: local
+
+networks:
+  mindful_prod_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

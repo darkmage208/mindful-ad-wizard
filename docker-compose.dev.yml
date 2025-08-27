@@ -1,0 +1,83 @@
+version: '3.8'
+
+# Development Docker Compose with hot reloading
+services:
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mindful_ad_wizard_dev
+      POSTGRES_USER: mindful_user
+      POSTGRES_PASSWORD: dev_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - mindful_dev_network
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - mindful_dev_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://mindful_user:dev_password@postgres:5432/mindful_ad_wizard_dev
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=dev-jwt-secret-key-not-for-production
+      - JWT_REFRESH_SECRET=dev-jwt-refresh-secret-key-not-for-production
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CLIENT_URL=http://localhost:5173
+      - PORT=5000
+      - VERBOSE_LOGS=true
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - mindful_dev_network
+    volumes:
+      - ./backend:/app
+      - backend_dev_logs:/app/logs
+      - /app/node_modules
+    command: npm run dev
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    restart: unless-stopped
+    environment:
+      - VITE_API_URL=http://localhost:5000/api
+    ports:
+      - "5173:5173"
+    networks:
+      - mindful_dev_network
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  backend_dev_logs:
+    driver: local
+
+networks:
+  mindful_dev_network:
+    driver: bridge

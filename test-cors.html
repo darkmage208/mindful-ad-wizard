@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS Test</title>
+</head>
+<body>
+    <h1>CORS Test</h1>
+    <button onclick="testHealthEndpoint()">Test Health Endpoint</button>
+    <button onclick="testAuthEndpoint()">Test Auth Endpoint</button>
+    <div id="output"></div>
+
+    <script>
+        async function testHealthEndpoint() {
+            try {
+                const response = await fetch('http://localhost:5000/health');
+                const data = await response.json();
+                document.getElementById('output').innerHTML = 
+                    `<h3>Health Test Result:</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('output').innerHTML = 
+                    `<h3>Health Test Error:</h3><p style="color: red">${error.message}</p>`;
+                console.error('Health test error:', error);
+            }
+        }
+
+        async function testAuthEndpoint() {
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'testpassword'
+                    })
+                });
+                const data = await response.json();
+                document.getElementById('output').innerHTML = 
+                    `<h3>Auth Test Result:</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('output').innerHTML = 
+                    `<h3>Auth Test Error:</h3><p style="color: red">${error.message}</p>`;
+                console.error('Auth test error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,288 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      UserRole @default(CLIENT)
+  avatar    String?
+  phone     String?
+  company   String?
+  bio       String?
+  
+  // Account status
+  isActive     Boolean @default(true)
+  isVerified   Boolean @default(false)
+  verifyToken  String?
+  resetToken   String?
+  resetExpires DateTime?
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lastLogin DateTime?
+  
+  // Relations
+  onboardingData OnboardingData?
+  campaigns      Campaign[]
+  leads          Lead[]
+  landingPages   LandingPage[]
+  notifications  Notification[]
+  apiKeys        ApiKey[]
+  
+  @@map("users")
+}
+
+model OnboardingData {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  city             String
+  targetAudience   String
+  averageTicket    Float
+  serviceType      String
+  businessGoals    String[] // JSON array as strings
+  budget           Float
+  experience       String
+  completed        Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("onboarding_data")
+}
+
+model Campaign {
+  id             String         @id @default(cuid())
+  userId         String
+  name           String
+  platform       Platform
+  status         CampaignStatus @default(DRAFT)
+  budget         Float
+  targetAudience String
+  objectives     String[] // JSON array
+  
+  // External IDs
+  metaCampaignId   String?
+  googleCampaignId String?
+  
+  // Performance metrics
+  impressions  Int @default(0)
+  clicks       Int @default(0)
+  conversions  Int @default(0)
+  cost         Float @default(0)
+  leads        Int @default(0)
+  
+  // AI Generated Content
+  aiGenerated Boolean @default(false)
+  headlines   String[] // JSON array
+  descriptions String[] // JSON array
+  keywords    String[] // JSON array
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creatives Creative[]
+  campaignLeads Lead[]
+  
+  @@map("campaigns")
+}
+
+model Creative {
+  id         String        @id @default(cuid())
+  campaignId String
+  type       CreativeType
+  headline   String
+  description String
+  cta        String
+  imageUrl   String?
+  videoUrl   String?
+  
+  // Performance
+  impressions Int @default(0)
+  clicks      Int @default(0)
+  conversions Int @default(0)
+  
+  isActive  Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  @@map("creatives")
+}
+
+model Lead {
+  id         String     @id @default(cuid())
+  userId     String
+  campaignId String?
+  name       String
+  email      String
+  phone      String?
+  source     String
+  status     LeadStatus @default(NEW)
+  notes      String?
+  value      Float?
+  
+  // Tracking
+  ipAddress String?
+  userAgent String?
+  utmSource String?
+  utmMedium String?
+  utmCampaign String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  
+  @@map("leads")
+}
+
+model LandingPage {
+  id       String @id @default(cuid())
+  userId   String
+  name     String
+  url      String @unique
+  template String
+  
+  // Customizations (JSON)
+  colors   Json // {primary, secondary, accent}
+  content  Json // {headline, subheadline, description, cta}
+  contact  Json // {whatsapp, phone, email}
+  
+  // Metrics
+  visits      Int @default(0)
+  conversions Int @default(0)
+  
+  isActive  Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("landing_pages")
+}
+
+model Notification {
+  id      String           @id @default(cuid())
+  userId  String
+  type    NotificationType
+  title   String
+  message String
+  data    Json? // Additional data
+  
+  isRead Boolean @default(false)
+  
+  createdAt DateTime @default(now())
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("notifications")
+}
+
+model ApiKey {
+  id         String     @id @default(cuid())
+  userId     String
+  service    ApiService
+  keyName    String
+  encryptedKey String
+  
+  isActive   Boolean @default(true)
+  lastUsed   DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("api_keys")
+}
+
+model SystemLog {
+  id        String    @id @default(cuid())
+  level     LogLevel
+  message   String
+  data      Json?
+  userId    String?
+  ipAddress String?
+  userAgent String?
+  
+  createdAt DateTime @default(now())
+  
+  @@map("system_logs")
+}
+
+// Enums
+enum UserRole {
+  CLIENT
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum Platform {
+  META
+  GOOGLE
+  BOTH
+}
+
+enum CampaignStatus {
+  DRAFT
+  PENDING
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum CreativeType {
+  IMAGE
+  VIDEO
+  CAROUSEL
+  TEXT
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  LOST
+}
+
+enum NotificationType {
+  CAMPAIGN_ALERT
+  LEAD_NOTIFICATION
+  SYSTEM_UPDATE
+  MARKETING_TIP
+  PERFORMANCE_REPORT
+}
+
+enum ApiService {
+  OPENAI
+  META_ADS
+  GOOGLE_ADS
+  EMAIL
+}
+
+enum LogLevel {
+  ERROR
+  WARN
+  INFO
+  DEBUG
+}
