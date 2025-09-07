@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -178,27 +180,27 @@ export default function AIChat() {
       )}
 
       {/* Chat Messages */}
-      <Card className="h-[500px] flex flex-col">
-        <CardHeader>
+      <Card className="flex flex-col h-[600px] md:h-[700px]">
+        <CardHeader className="flex-shrink-0 pb-3">
           <CardTitle className="flex items-center space-x-2">
             <MessageCircle className="h-5 w-5" />
             <span>Chat</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col">
-          <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+        <CardContent className="flex-1 flex flex-col min-h-0 p-4">
+          <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
             {messages.map((message) => (
               <div
                 key={message.id}
                 className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div className={`flex space-x-2 max-w-[80%] ${
+                <div className={`flex space-x-3 max-w-[85%] sm:max-w-[80%] md:max-w-[75%] ${
                   message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
                 }`}>
-                  <div className={`p-2 rounded-full ${
+                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-1 ${
                     message.type === 'user' 
                       ? 'bg-primary text-white' 
-                      : 'bg-gray-200'
+                      : 'bg-gray-200 text-gray-600'
                   }`}>
                     {message.type === 'user' ? (
                       <User className="h-4 w-4" />
@@ -206,36 +208,89 @@ export default function AIChat() {
                       <Bot className="h-4 w-4" />
                     )}
                   </div>
-                  <div className={`p-3 rounded-lg ${
-                    message.type === 'user'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100'
+                  <div className={`flex flex-col ${
+                    message.type === 'user' ? 'items-end' : 'items-start'
                   }`}>
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                    <p className={`text-xs mt-1 ${
+                    <div className={`px-4 py-3 rounded-2xl max-w-full break-words ${
+                      message.type === 'user'
+                        ? 'bg-primary text-white rounded-br-md'
+                        : 'bg-gray-100 text-gray-900 rounded-bl-md'
+                    }`}>
+                      {message.type === 'user' ? (
+                        <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                          {message.content}
+                        </div>
+                      ) : (
+                        <div className="text-sm leading-relaxed prose prose-sm prose-gray max-w-none dark:prose-invert">
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                              ul: ({ children }) => <ul className="mb-2 pl-4 list-disc">{children}</ul>,
+                              ol: ({ children }) => <ol className="mb-2 pl-4 list-decimal">{children}</ol>,
+                              li: ({ children }) => <li className="mb-1">{children}</li>,
+                              strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                              em: ({ children }) => <em className="italic">{children}</em>,
+                              code: ({ children, className }) => 
+                                className?.includes('language-') ? (
+                                  <code className="block bg-gray-800 text-white p-3 rounded text-xs font-mono overflow-x-auto">
+                                    {children}
+                                  </code>
+                                ) : (
+                                  <code className="bg-gray-200 px-1.5 py-0.5 rounded text-xs font-mono">
+                                    {children}
+                                  </code>
+                                ),
+                              pre: ({ children }) => <pre className="mb-2 overflow-x-auto">{children}</pre>,
+                              h1: ({ children }) => <h1 className="text-lg font-bold mb-2">{children}</h1>,
+                              h2: ({ children }) => <h2 className="text-md font-bold mb-1">{children}</h2>,
+                              h3: ({ children }) => <h3 className="text-sm font-semibold mb-1">{children}</h3>,
+                              blockquote: ({ children }) => (
+                                <blockquote className="border-l-4 border-gray-300 pl-3 italic">
+                                  {children}
+                                </blockquote>
+                              ),
+                              a: ({ href, children }) => (
+                                <a 
+                                  href={href} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:text-blue-800 underline"
+                                >
+                                  {children}
+                                </a>
+                              ),
+                            }}
+                          >
+                            {message.content}
+                          </ReactMarkdown>
+                        </div>
+                      )}
+                    </div>
+                    <div className={`text-xs mt-1 px-2 ${
                       message.type === 'user' 
-                        ? 'text-blue-100' 
-                        : 'text-gray-500'
+                        ? 'text-gray-500' 
+                        : 'text-gray-400'
                     }`}>
                       {message.timestamp.toLocaleTimeString([], { 
                         hour: '2-digit', 
                         minute: '2-digit' 
                       })}
-                    </p>
+                    </div>
                   </div>
                 </div>
               </div>
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="flex space-x-2">
-                  <div className="p-2 rounded-full bg-gray-200">
+                <div className="flex space-x-3 max-w-[85%] sm:max-w-[80%] md:max-w-[75%]">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-gray-200 text-gray-600">
                     <Bot className="h-4 w-4" />
                   </div>
-                  <div className="p-3 rounded-lg bg-gray-100">
+                  <div className="bg-gray-100 px-4 py-3 rounded-2xl rounded-bl-md">
                     <div className="flex items-center space-x-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm">AI is typing...</span>
+                      <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+                      <span className="text-sm text-gray-600">AI is typing...</span>
                     </div>
                   </div>
                 </div>
@@ -244,18 +299,20 @@ export default function AIChat() {
           </div>
 
           {/* Input Form */}
-          <form onSubmit={handleSubmit} className="flex space-x-2">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask me anything about your campaigns, targeting, or marketing strategy..."
-              disabled={isLoading}
-              className="flex-1"
-            />
-            <Button type="submit" disabled={!input.trim() || isLoading}>
-              <Send className="h-4 w-4" />
-            </Button>
-          </form>
+          <div className="flex-shrink-0 border-t pt-4">
+            <form onSubmit={handleSubmit} className="flex space-x-2">
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask me anything about your campaigns, targeting, or marketing strategy..."
+                disabled={isLoading}
+                className="flex-1 min-w-0"
+              />
+              <Button type="submit" disabled={!input.trim() || isLoading} className="flex-shrink-0">
+                <Send className="h-4 w-4" />
+              </Button>
+            </form>
+          </div>
         </CardContent>
       </Card>
     </div>

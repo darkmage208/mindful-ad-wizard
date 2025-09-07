@@ -88,11 +88,24 @@ export interface LandingPage {
     subheadline: string
     description: string
     cta: string
+    features?: string[]
+    testimonials?: {
+      text: string
+      author: string
+      rating: number
+    }[]
   }
   contact: {
     whatsapp: string
     phone: string
     email: string
+    address?: string
+    hours?: string
+  }
+  seo?: {
+    title: string
+    description: string
+    keywords: string
   }
   visits: number
   conversions: number

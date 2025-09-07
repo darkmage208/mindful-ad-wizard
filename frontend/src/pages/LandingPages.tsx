@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -13,6 +14,7 @@ import {
   ExternalLink,
   Trash2,
   Copy,
+  Settings,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -23,6 +25,7 @@ import {
 
 export default function LandingPages() {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   
   const { data: landingPages = [], isLoading } = useQuery({
     queryKey: ['landing-pages'],
@@ -53,9 +56,7 @@ export default function LandingPages() {
   }
 
   const handleEdit = (id: string) => {
-    // Navigate to edit page (would need to create this route)
-    console.log('Edit landing page:', id)
-    toast.info('Landing page editor coming soon!')
+    navigate(`/landing-pages/${id}/edit`)
   }
 
   const handleDuplicate = async (page: LandingPage) => {
@@ -76,42 +77,6 @@ export default function LandingPages() {
     }
   }
 
-  const handleCreateNew = async () => {
-    try {
-      const newPageData = {
-        name: 'New Landing Page',
-        template: 'psychology-practice',
-        colors: {
-          primary: '#2563eb',
-          secondary: '#64748b',
-          accent: '#0ea5e9',
-        },
-        content: {
-          headline: 'Professional Psychology Services',
-          subheadline: 'Compassionate care for your mental health journey',
-          description: 'Get the support you need from a licensed mental health professional.',
-          cta: 'Schedule Consultation',
-        },
-        contact: {
-          whatsapp: '',
-          phone: '',
-          email: '',
-        },
-      }
-      
-      const response = await landingPagesAPI.create(newPageData)
-      toast.success('Landing page created successfully')
-      queryClient.invalidateQueries({ queryKey: ['landing-pages'] })
-      
-      // Optionally navigate to edit the new page
-      const newPageId = response.data.data.landingPage.id
-      console.log('Created new landing page:', newPageId)
-      
-    } catch (error) {
-      console.error('Failed to create landing page:', error)
-      toast.error('Failed to create landing page')
-    }
-  }
 
   if (isLoading) {
     return (
@@ -146,7 +111,7 @@ export default function LandingPages() {
             Create and manage high-converting landing pages for your campaigns.
           </p>
         </div>
-        <Button onClick={handleCreateNew}>
+        <Button onClick={() => navigate('/landing-pages/new')}>
           <Plus className="mr-2 h-4 w-4" />
           New Landing Page
         </Button>
@@ -163,7 +128,7 @@ export default function LandingPages() {
             <p className="text-gray-500 text-center max-w-sm mb-6">
               Create beautiful, conversion-optimized landing pages that work perfectly with your ad campaigns.
             </p>
-            <Button onClick={handleCreateNew}>
+            <Button onClick={() => navigate('/landing-pages/new')}>
               <Plus className="mr-2 h-4 w-4" />
               Create Your First Landing Page
             </Button>
