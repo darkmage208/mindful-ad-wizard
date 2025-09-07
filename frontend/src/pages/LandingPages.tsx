@@ -1,19 +1,14 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { landingPagesAPI } from '@/lib/api'
-import { formatDate } from '@/lib/utils'
 import { LandingPage } from '@/types'
 import {
   Plus,
   Eye,
   Edit,
   Globe,
-  Smartphone,
-  Monitor,
   MoreHorizontal,
   ExternalLink,
   Trash2,
@@ -27,10 +22,96 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 export default function LandingPages() {
+  const queryClient = useQueryClient()
+  
   const { data: landingPages = [], isLoading } = useQuery({
     queryKey: ['landing-pages'],
-    queryFn: () => landingPagesAPI.getAll().then(res => res.data.data.landingPages || []),
+    queryFn: () => landingPagesAPI.getAll().then(res => res.data.landingPages || []),
   })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => landingPagesAPI.delete(id),
+    onSuccess: () => {
+      toast.success('Landing page deleted successfully')
+      queryClient.invalidateQueries({ queryKey: ['landing-pages'] })
+    },
+    onError: (error) => {
+      console.error('Failed to delete landing page:', error)
+      toast.error('Failed to delete landing page')
+    },
+  })
+
+  const handleDelete = async (id: string, name: string) => {
+    if (confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
+      deleteMutation.mutate(id)
+    }
+  }
+
+  const handlePreview = (page: LandingPage) => {
+    // Open preview in new tab
+    window.open(page.url, '_blank')
+  }
+
+  const handleEdit = (id: string) => {
+    // Navigate to edit page (would need to create this route)
+    console.log('Edit landing page:', id)
+    toast.info('Landing page editor coming soon!')
+  }
+
+  const handleDuplicate = async (page: LandingPage) => {
+    try {
+      const duplicateData = {
+        name: `${page.name} (Copy)`,
+        template: page.template,
+        colors: page.colors,
+        content: page.content,
+        contact: page.contact,
+      }
+      await landingPagesAPI.create(duplicateData)
+      toast.success('Landing page duplicated successfully')
+      queryClient.invalidateQueries({ queryKey: ['landing-pages'] })
+    } catch (error) {
+      console.error('Failed to duplicate landing page:', error)
+      toast.error('Failed to duplicate landing page')
+    }
+  }
+
+  const handleCreateNew = async () => {
+    try {
+      const newPageData = {
+        name: 'New Landing Page',
+        template: 'psychology-practice',
+        colors: {
+          primary: '#2563eb',
+          secondary: '#64748b',
+          accent: '#0ea5e9',
+        },
+        content: {
+          headline: 'Professional Psychology Services',
+          subheadline: 'Compassionate care for your mental health journey',
+          description: 'Get the support you need from a licensed mental health professional.',
+          cta: 'Schedule Consultation',
+        },
+        contact: {
+          whatsapp: '',
+          phone: '',
+          email: '',
+        },
+      }
+      
+      const response = await landingPagesAPI.create(newPageData)
+      toast.success('Landing page created successfully')
+      queryClient.invalidateQueries({ queryKey: ['landing-pages'] })
+      
+      // Optionally navigate to edit the new page
+      const newPageId = response.data.landingPage.id
+      console.log('Created new landing page:', newPageId)
+      
+    } catch (error) {
+      console.error('Failed to create landing page:', error)
+      toast.error('Failed to create landing page')
+    }
+  }
 
   if (isLoading) {
     return (
@@ -65,7 +146,7 @@ export default function LandingPages() {
             Create and manage high-converting landing pages for your campaigns.
           </p>
         </div>
-        <Button>
+        <Button onClick={handleCreateNew}>
           <Plus className="mr-2 h-4 w-4" />
           New Landing Page
         </Button>
@@ -82,7 +163,7 @@ export default function LandingPages() {
             <p className="text-gray-500 text-center max-w-sm mb-6">
               Create beautiful, conversion-optimized landing pages that work perfectly with your ad campaigns.
             </p>
-            <Button>
+            <Button onClick={handleCreateNew}>
               <Plus className="mr-2 h-4 w-4" />
               Create Your First Landing Page
             </Button>
@@ -109,23 +190,26 @@ export default function LandingPages() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handlePreview(page)}>
                         <Eye className="mr-2 h-4 w-4" />
                         Preview
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEdit(page.id)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDuplicate(page)}>
                         <Copy className="mr-2 h-4 w-4" />
                         Duplicate
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handlePreview(page)}>
                         <ExternalLink className="mr-2 h-4 w-4" />
                         View Live
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-600">
+                      <DropdownMenuItem 
+                        className="text-red-600"
+                        onClick={() => handleDelete(page.id, page.name)}
+                      >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete
                       </DropdownMenuItem>
@@ -140,7 +224,7 @@ export default function LandingPages() {
                   <div className="bg-gray-100 rounded-lg p-4 h-32 flex items-center justify-center">
                     <div className="text-center">
                       <Globe className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500">Page Preview</p>
+                      <p className="text-sm text-gray-500">{page.template} Template</p>
                     </div>
                   </div>
 
@@ -168,11 +252,20 @@ export default function LandingPages() {
                   </div>
 
                   <div className="flex space-x-2">
-                    <Button size="sm" variant="outline" className="flex-1">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => handlePreview(page)}
+                    >
                       <Eye className="mr-1 h-3 w-3" />
                       Preview
                     </Button>
-                    <Button size="sm" className="flex-1">
+                    <Button 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => handleEdit(page.id)}
+                    >
                       <Edit className="mr-1 h-3 w-3" />
                       Edit
                     </Button>

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -26,7 +27,6 @@ export default function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
   const { register: registerUser } = useAuth()
   const navigate = useNavigate()
 
@@ -40,16 +40,20 @@ export default function RegisterForm() {
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true)
-    setError('')
 
     try {
       await registerUser(data.name, data.email, data.password)
+      toast.success('Account created successfully', {
+        description: 'Welcome to Mindful Ad Wizard!'
+      })
       navigate('/onboarding')
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error && 'response' in error 
-        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Registration failed'
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error && 'response' in err 
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Registration failed'
         : 'Registration failed'
-      setError(errorMessage)
+      toast.error('Registration failed', {
+        description: errorMessage
+      })
     } finally {
       setIsLoading(false)
     }
@@ -151,12 +155,6 @@ export default function RegisterForm() {
                 <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
               )}
             </div>
-
-            {error && (
-              <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
-                {error}
-              </div>
-            )}
 
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (

@@ -65,9 +65,7 @@ export const commonSchemas = {
   email: Joi.string().email().lowercase().trim(),
   
   // Password validation
-  password: Joi.string().min(8).max(128).pattern(
-    new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)')
-  ).message('Password must contain at least one lowercase letter, one uppercase letter, and one number'),
+  password: Joi.string().min(6).max(128).message('Password must at least 6 characters'),
   
   // Name validation
   name: Joi.string().min(2).max(50).trim(),
@@ -260,9 +258,9 @@ export const landingPageSchemas = {
         cta: Joi.string().max(50),
       }),
       contact: Joi.object({
-        whatsapp: commonSchemas.phone,
-        phone: commonSchemas.phone,
-        email: commonSchemas.email,
+        whatsapp: commonSchemas.phone.allow('').optional(),
+        phone: commonSchemas.phone.allow('').optional(),
+        email: commonSchemas.email.allow('').optional(),
       }),
     }),
   },

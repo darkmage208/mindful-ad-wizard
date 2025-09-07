@@ -78,24 +78,27 @@ export interface LandingPage {
   name: string
   url: string
   template: string
-  customizations: {
-    colors: {
-      primary: string
-      secondary: string
-      accent: string
-    }
-    content: {
-      headline: string
-      subheadline: string
-      description: string
-      cta: string
-    }
-    contact: {
-      whatsapp: string
-      phone: string
-      email: string
-    }
+  colors: {
+    primary: string
+    secondary: string
+    accent: string
   }
+  content: {
+    headline: string
+    subheadline: string
+    description: string
+    cta: string
+  }
+  contact: {
+    whatsapp: string
+    phone: string
+    email: string
+  }
+  visits: number
+  conversions: number
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
   metrics?: {
     visits: number
     conversions: number

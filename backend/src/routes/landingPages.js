@@ -18,7 +18,7 @@ router.use(authenticate);
 router.post('/', validate(landingPageSchemas.create), asyncHandler(createLandingPage));
 router.get('/', asyncHandler(getLandingPages));
 router.get('/:id', requireOwnership(), asyncHandler(getLandingPageById));
-router.put('/:id', validate(landingPageSchemas.create), requireOwnership(), asyncHandler(updateLandingPage));
+router.put('/:id', requireOwnership(), asyncHandler(updateLandingPage));
 router.delete('/:id', requireOwnership(), asyncHandler(deleteLandingPage));
 
 export default router;

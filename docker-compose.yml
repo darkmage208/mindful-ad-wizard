@@ -38,6 +38,23 @@ services:
       timeout: 5s
       retries: 3
 
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "${PGADMIN_PORT:-8080}:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mindful_network
+
   backend:
     build:
       context: ./backend
@@ -133,6 +150,8 @@ volumes:
   postgres_data:
     driver: local
   redis_data:
+    driver: local
+  pgadmin_data:
     driver: local
   backend_logs:
     driver: local

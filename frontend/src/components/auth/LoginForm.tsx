@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -20,7 +21,6 @@ type LoginFormData = z.infer<typeof loginSchema>
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
   const { login } = useAuth()
   const navigate = useNavigate()
 
@@ -34,16 +34,20 @@ export default function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true)
-    setError('')
 
     try {
       await login(data.email, data.password)
+      toast.success('Login successful', {
+        description: 'Welcome back!'
+      })
       navigate('/dashboard')
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error && 'response' in error 
-        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Invalid credentials'
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error && 'response' in err 
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Invalid credentials'
         : 'Invalid credentials'
-      setError(errorMessage)
+      toast.error('Login failed', {
+        description: errorMessage
+      })
     } finally {
       setIsLoading(false)
     }
@@ -102,12 +106,6 @@ export default function LoginForm() {
                 <p className="text-sm text-red-500">{errors.password.message}</p>
               )}
             </div>
-
-            {error && (
-              <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
-                {error}
-              </div>
-            )}
 
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
