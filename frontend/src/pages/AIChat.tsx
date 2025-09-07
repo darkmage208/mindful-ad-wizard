@@ -115,7 +115,7 @@ export default function AIChat() {
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: response.data.response,
+        content: response.data.data.response,
         timestamp: new Date(),
       }
 

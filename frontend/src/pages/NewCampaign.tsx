@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -49,6 +49,7 @@ export default function NewCampaign() {
   const navigate = useNavigate()
   const { id } = useParams()
   const isEditing = !!id
+  const queryClient = useQueryClient()
 
   const [currentStep, setCurrentStep] = useState(1)
   const [isGeneratingContent, setIsGeneratingContent] = useState(false)
@@ -68,6 +69,7 @@ export default function NewCampaign() {
     mutationFn: (data: Partial<Campaign>) => campaignsAPI.create(data),
     onSuccess: () => {
       toast.success('Campaign created successfully!')
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] })
       navigate('/campaigns')
     },
     onError: (error: unknown) => {
@@ -82,6 +84,8 @@ export default function NewCampaign() {
     mutationFn: (data: Partial<Campaign>) => campaignsAPI.update(id!, data),
     onSuccess: () => {
       toast.success('Campaign updated successfully!')
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] })
+      queryClient.invalidateQueries({ queryKey: ['campaign', id] })
       navigate('/campaigns')
     },
     onError: (error: unknown) => {

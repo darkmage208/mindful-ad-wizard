@@ -121,14 +121,16 @@ export default function Layout({ children }: LayoutProps) {
         {/* Top bar */}
         <div className="sticky top-0 z-10 bg-white shadow-sm border-b">
           <div className="flex items-center justify-between px-4 py-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              onClick={() => setMobileMenuOpen(true)}
-            >
-              <Menu className="w-5 h-5" />
-            </Button>
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden"
+                onClick={() => setMobileMenuOpen(true)}
+              >
+                <Menu className="w-5 h-5" />
+              </Button>
+            </div>
 
             <div className="flex items-center space-x-4">
               <DropdownMenu>

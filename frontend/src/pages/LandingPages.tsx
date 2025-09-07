@@ -26,7 +26,7 @@ export default function LandingPages() {
   
   const { data: landingPages = [], isLoading } = useQuery({
     queryKey: ['landing-pages'],
-    queryFn: () => landingPagesAPI.getAll().then(res => res.data.landingPages || []),
+    queryFn: () => landingPagesAPI.getAll().then(res => res.data.data.landingPages || []),
   })
 
   const deleteMutation = useMutation({
@@ -104,7 +104,7 @@ export default function LandingPages() {
       queryClient.invalidateQueries({ queryKey: ['landing-pages'] })
       
       // Optionally navigate to edit the new page
-      const newPageId = response.data.landingPage.id
+      const newPageId = response.data.data.landingPage.id
       console.log('Created new landing page:', newPageId)
       
     } catch (error) {
