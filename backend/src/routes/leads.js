@@ -20,8 +20,8 @@ router.use(authenticate);
 router.post('/', validate(leadSchemas.create), asyncHandler(createLead));
 router.get('/', asyncHandler(getLeads));
 router.get('/export', asyncHandler(exportLeads));
-router.get('/:id', requireOwnership(), asyncHandler(getLeadById));
-router.put('/:id', requireOwnership(), asyncHandler(updateLead));
-router.delete('/:id', requireOwnership(), asyncHandler(deleteLead));
+router.get('/:id', requireOwnership('lead'), asyncHandler(getLeadById));
+router.put('/:id', validate(leadSchemas.update), requireOwnership('lead'), asyncHandler(updateLead));
+router.delete('/:id', requireOwnership('lead'), asyncHandler(deleteLead));
 
 export default router;

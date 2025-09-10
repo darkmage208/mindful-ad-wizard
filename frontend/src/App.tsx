@@ -11,6 +11,7 @@ import NewCampaign from '@/pages/NewCampaign'
 import Analytics from '@/pages/Analytics'
 import LandingPages from '@/pages/LandingPages'
 import NewLandingPage from '@/pages/NewLandingPage'
+import LiveLandingPage from '@/pages/LiveLandingPage'
 import AIChat from '@/pages/AIChat'
 import Settings from '@/pages/Settings'
 import AdminPanel from '@/pages/AdminPanel'
@@ -50,6 +51,7 @@ function App() {
         <Route path="/landing-pages" element={<LandingPages />} />
         <Route path="/landing-pages/new" element={<NewLandingPage />} />
         <Route path="/landing-pages/:id/edit" element={<NewLandingPage />} />
+        <Route path="/lp/:slug" element={<LiveLandingPage />} />
         <Route path="/ai-chat" element={<AIChat />} />
         <Route path="/settings" element={<Settings />} />
         {user.role === 'admin' && (

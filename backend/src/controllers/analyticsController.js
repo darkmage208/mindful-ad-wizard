@@ -1,5 +1,5 @@
 import { prisma } from '../utils/database.js';
-import { calculatePercentage, formatCurrency } from '../utils/helpers.js';
+import { calculatePercentage } from '../utils/helpers.js';
 
 /**
  * Get dashboard analytics

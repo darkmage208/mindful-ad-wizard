@@ -164,8 +164,10 @@ model LandingPage {
   
   // Customizations (JSON)
   colors   Json // {primary, secondary, accent}
-  content  Json // {headline, subheadline, description, cta}
-  contact  Json // {whatsapp, phone, email}
+  content  Json // {headline, subheadline, description, cta, features, testimonials}
+  contact  Json // {whatsapp, phone, email, address, hours}
+  seo      Json? // {title, description, keywords}
+  images   Json? // [{url, alt, type}]
   
   // Metrics
   visits      Int @default(0)

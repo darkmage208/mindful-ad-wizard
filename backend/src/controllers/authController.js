@@ -18,11 +18,12 @@ import {
   ConflictError,
   ValidationError,
 } from '../middleware/errorHandler.js';
+import { asyncControllerHandler } from '../utils/controllerHelpers.js';
 
 /**
  * Register new user
  */
-export const register = async (req, res) => {
+export const register = asyncControllerHandler(async (req, res) => {
   const { name, email, password } = req.body;
 
   // Check if user already exists
@@ -90,12 +91,12 @@ export const register = async (req, res) => {
       refreshToken: refreshTokenValue,
     },
   });
-};
+});
 
 /**
  * Login user
  */
-export const login = async (req, res) => {
+export const login = asyncControllerHandler(async (req, res) => {
   const { email, password } = req.body;
 
   // Find user
@@ -143,7 +144,7 @@ export const login = async (req, res) => {
       refreshToken: refreshTokenValue,
     },
   });
-};
+});
 
 /**
  * Logout user

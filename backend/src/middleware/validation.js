@@ -65,7 +65,10 @@ export const commonSchemas = {
   email: Joi.string().email().lowercase().trim(),
   
   // Password validation
-  password: Joi.string().min(6).max(128).message('Password must at least 6 characters'),
+  password: Joi.string().min(6).max(128).messages({
+    'string.min': 'Password must be at least 6 characters',
+    'string.max': 'Password must not exceed 128 characters'
+  }),
   
   // Name validation
   name: Joi.string().min(2).max(50).trim(),
@@ -254,14 +257,93 @@ export const landingPageSchemas = {
       content: Joi.object({
         headline: Joi.string().max(100),
         subheadline: Joi.string().max(200),
-        description: Joi.string().max(1000),
+        description: Joi.string().max(2000),
         cta: Joi.string().max(50),
+        features: Joi.array().items(Joi.string().max(100)),
+        testimonials: Joi.array().items(Joi.object({
+          text: Joi.string().max(500),
+          author: Joi.string().max(100),
+          rating: Joi.number().min(1).max(5),
+        })),
       }),
       contact: Joi.object({
         whatsapp: commonSchemas.phone.allow('').optional(),
         phone: commonSchemas.phone.allow('').optional(),
         email: commonSchemas.email.allow('').optional(),
+        address: Joi.string().max(200).allow('').optional(),
+        hours: Joi.string().max(100).allow('').optional(),
       }),
+      seo: Joi.object({
+        title: Joi.string().max(60).allow('').optional(),
+        description: Joi.string().max(160).allow('').optional(),
+        keywords: Joi.string().max(200).allow('').optional(),
+      }),
+      images: Joi.array().items(Joi.object({
+        url: Joi.string().uri(),
+        alt: Joi.string().max(100),
+        type: Joi.string().valid('hero', 'feature', 'testimonial', 'gallery'),
+      })),
+    }),
+  },
+
+  generateAI: {
+    body: Joi.object({
+      businessType: Joi.string().required(),
+      targetAudience: Joi.string().max(500).required(),
+      services: Joi.array().items(Joi.string()).min(1).required(),
+      businessName: Joi.string().max(100).required(),
+      tone: Joi.string().valid('professional', 'friendly', 'casual', 'authoritative').default('professional'),
+      includeImages: Joi.boolean().default(true),
+      template: Joi.string().default('psychology-practice'),
+      contact: Joi.object({
+        phone: Joi.string().allow('').optional(),
+        email: Joi.string().email().allow('').optional(),
+        address: Joi.string().max(200).allow('').optional(),
+      }).optional(),
+    }),
+  },
+
+  update: {
+    params: Joi.object({
+      id: commonSchemas.uuid.required(),
+    }),
+    body: Joi.object({
+      name: Joi.string().min(3).max(100),
+      template: Joi.string(),
+      colors: Joi.object({
+        primary: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/),
+        secondary: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/),
+        accent: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/),
+      }),
+      content: Joi.object({
+        headline: Joi.string().max(100),
+        subheadline: Joi.string().max(200),
+        description: Joi.string().max(2000),
+        cta: Joi.string().max(50),
+        features: Joi.array().items(Joi.string().max(100)),
+        testimonials: Joi.array().items(Joi.object({
+          text: Joi.string().max(500),
+          author: Joi.string().max(100),
+          rating: Joi.number().min(1).max(5),
+        })),
+      }),
+      contact: Joi.object({
+        whatsapp: commonSchemas.phone.allow('').optional(),
+        phone: commonSchemas.phone.allow('').optional(),
+        email: commonSchemas.email.allow('').optional(),
+        address: Joi.string().max(200).allow('').optional(),
+        hours: Joi.string().max(100).allow('').optional(),
+      }),
+      seo: Joi.object({
+        title: Joi.string().max(60).allow('').optional(),
+        description: Joi.string().max(160).allow('').optional(),
+        keywords: Joi.string().max(200).allow('').optional(),
+      }),
+      images: Joi.array().items(Joi.object({
+        url: Joi.string().uri(),
+        alt: Joi.string().max(100),
+        type: Joi.string().valid('hero', 'feature', 'testimonial', 'gallery'),
+      })),
     }),
   },
 };
@@ -279,6 +361,12 @@ export const aiSchemas = {
     body: Joi.object({
       type: Joi.string().valid('headline', 'description', 'ad-copy').required(),
       context: Joi.object().required(),
+    }),
+  },
+  
+  analyzeCampaign: {
+    params: Joi.object({
+      campaignId: commonSchemas.uuid.required(),
     }),
   },
 };

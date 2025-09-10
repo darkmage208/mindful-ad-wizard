@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend Auth Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>Frontend Authentication Test</h1>
+    
+    <div style="margin: 20px;">
+        <h2>Login Test</h2>
+        <input type="email" id="loginEmail" placeholder="Email" value="newuser2@example.com">
+        <input type="password" id="loginPassword" placeholder="Password" value="test12">
+        <button onclick="testLogin()">Test Login</button>
+        <div id="loginResult"></div>
+    </div>
+    
+    <div style="margin: 20px;">
+        <h2>Register Test</h2>
+        <input type="text" id="registerName" placeholder="Name" value="Test User">
+        <input type="email" id="registerEmail" placeholder="Email">
+        <input type="password" id="registerPassword" placeholder="Password" value="password123">
+        <button onclick="testRegister()">Test Register</button>
+        <div id="registerResult"></div>
+    </div>
+    
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api';
+        
+        async function testLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const resultDiv = document.getElementById('loginResult');
+            
+            try {
+                const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+                    email,
+                    password
+                });
+                
+                console.log('Login response:', response.data);
+                resultDiv.innerHTML = '<pre style="color: green;">SUCCESS:\n' + JSON.stringify(response.data, null, 2) + '</pre>';
+                
+                // Store token
+                if (response.data.data && response.data.data.accessToken) {
+                    localStorage.setItem('token', response.data.data.accessToken);
+                    
+                    // Test protected route
+                    const meResponse = await axios.get(`${API_BASE_URL}/auth/me`, {
+                        headers: {
+                            'Authorization': 'Bearer ' + response.data.data.accessToken
+                        }
+                    });
+                    console.log('Me response:', meResponse.data);
+                    resultDiv.innerHTML += '<pre style="color: green;">ME ENDPOINT SUCCESS:\n' + JSON.stringify(meResponse.data, null, 2) + '</pre>';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                resultDiv.innerHTML = '<pre style="color: red;">ERROR:\n' + (error.response ? JSON.stringify(error.response.data, null, 2) : error.message) + '</pre>';
+            }
+        }
+        
+        async function testRegister() {
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value || 'test' + Date.now() + '@example.com';
+            const password = document.getElementById('registerPassword').value;
+            const resultDiv = document.getElementById('registerResult');
+            
+            document.getElementById('registerEmail').value = email;
+            
+            try {
+                const response = await axios.post(`${API_BASE_URL}/auth/register`, {
+                    name,
+                    email,
+                    password
+                });
+                
+                console.log('Register response:', response.data);
+                resultDiv.innerHTML = '<pre style="color: green;">SUCCESS:\n' + JSON.stringify(response.data, null, 2) + '</pre>';
+                
+                // Store token
+                if (response.data.data && response.data.data.accessToken) {
+                    localStorage.setItem('token', response.data.data.accessToken);
+                }
+            } catch (error) {
+                console.error('Register error:', error);
+                resultDiv.innerHTML = '<pre style="color: red;">ERROR:\n' + (error.response ? JSON.stringify(error.response.data, null, 2) : error.message) + '</pre>';
+            }
+        }
+    </script>
+</body>
+</html>

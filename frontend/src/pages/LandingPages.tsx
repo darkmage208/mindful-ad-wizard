@@ -1,10 +1,14 @@
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { landingPagesAPI } from '@/lib/api'
 import { LandingPage } from '@/types'
+import AIGenerationForm from '@/components/landing-page/AIGenerationForm'
+import PreviewDialog from '@/components/landing-page/PreviewDialog'
 import {
   Plus,
   Eye,
@@ -15,6 +19,9 @@ import {
   Trash2,
   Copy,
   Settings,
+  Sparkles,
+  Image,
+  TrendingUp,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -26,6 +33,7 @@ import {
 export default function LandingPages() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const [previewPage, setPreviewPage] = useState<LandingPage | null>(null)
   
   const { data: landingPages = [], isLoading } = useQuery({
     queryKey: ['landing-pages'],
@@ -51,7 +59,10 @@ export default function LandingPages() {
   }
 
   const handlePreview = (page: LandingPage) => {
-    // Open preview in new tab
+    setPreviewPage(page)
+  }
+
+  const handleLiveView = (page: LandingPage) => {
     window.open(page.url, '_blank')
   }
 
@@ -111,10 +122,20 @@ export default function LandingPages() {
             Create and manage high-converting landing pages for your campaigns.
           </p>
         </div>
-        <Button onClick={() => navigate('/landing-pages/new')}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Landing Page
-        </Button>
+        <div className="flex space-x-2">
+          <AIGenerationForm 
+            trigger={
+              <Button>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Generate with AI
+              </Button>
+            }
+          />
+          <Button onClick={() => navigate('/landing-pages/new')} variant="outline">
+            <Plus className="mr-2 h-4 w-4" />
+            Create Manually
+          </Button>
+        </div>
       </div>
 
       {/* Landing Pages Grid */}
@@ -126,12 +147,22 @@ export default function LandingPages() {
               No landing pages yet
             </h3>
             <p className="text-gray-500 text-center max-w-sm mb-6">
-              Create beautiful, conversion-optimized landing pages that work perfectly with your ad campaigns.
+              Create beautiful, conversion-optimized landing pages using AI or build them manually.
             </p>
-            <Button onClick={() => navigate('/landing-pages/new')}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Your First Landing Page
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <AIGenerationForm 
+                trigger={
+                  <Button size="lg">
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Generate with AI
+                  </Button>
+                }
+              />
+              <Button size="lg" variant="outline" onClick={() => navigate('/landing-pages/new')}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Manually
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -140,12 +171,20 @@ export default function LandingPages() {
             <Card key={page.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg leading-tight">
-                      {page.name}
-                    </CardTitle>
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <CardTitle className="text-lg leading-tight">
+                        {page.name}
+                      </CardTitle>
+                      {page.images && page.images.length > 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          <Image className="w-3 h-3 mr-1" />
+                          AI Images
+                        </Badge>
+                      )}
+                    </div>
                     <CardDescription className="text-sm">
-                      {page.template} template
+                      {page.template.replace('-', ' ')} template
                     </CardDescription>
                   </div>
                   <DropdownMenu>
@@ -167,7 +206,7 @@ export default function LandingPages() {
                         <Copy className="mr-2 h-4 w-4" />
                         Duplicate
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handlePreview(page)}>
+                      <DropdownMenuItem onClick={() => handleLiveView(page)}>
                         <ExternalLink className="mr-2 h-4 w-4" />
                         View Live
                       </DropdownMenuItem>
@@ -240,6 +279,15 @@ export default function LandingPages() {
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Preview Dialog */}
+      {previewPage && (
+        <PreviewDialog
+          landingPage={previewPage}
+          open={!!previewPage}
+          onOpenChange={(open) => !open && setPreviewPage(null)}
+        />
       )}
     </div>
   )

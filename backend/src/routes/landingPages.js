@@ -8,6 +8,7 @@ import {
   getLandingPageById,
   updateLandingPage,
   deleteLandingPage,
+  generateLandingPageWithAI,
 } from '../controllers/landingPageController.js';
 
 const router = express.Router();
@@ -16,9 +17,10 @@ const router = express.Router();
 router.use(authenticate);
 
 router.post('/', validate(landingPageSchemas.create), asyncHandler(createLandingPage));
+router.post('/generate-ai', validate(landingPageSchemas.generateAI), asyncHandler(generateLandingPageWithAI));
 router.get('/', asyncHandler(getLandingPages));
-router.get('/:id', requireOwnership(), asyncHandler(getLandingPageById));
-router.put('/:id', requireOwnership(), asyncHandler(updateLandingPage));
-router.delete('/:id', requireOwnership(), asyncHandler(deleteLandingPage));
+router.get('/:id', requireOwnership('landingPage'), asyncHandler(getLandingPageById));
+router.put('/:id', validate(landingPageSchemas.update), requireOwnership('landingPage'), asyncHandler(updateLandingPage));
+router.delete('/:id', requireOwnership('landingPage'), asyncHandler(deleteLandingPage));
 
 export default router;

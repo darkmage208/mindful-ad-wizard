@@ -103,6 +103,21 @@ export const landingPagesAPI = {
   create: (data: Partial<LandingPage>) =>
     api.post<LandingPage>('/landing-pages', data),
   
+  generateWithAI: (data: {
+    businessType: string
+    targetAudience: string
+    services: string[]
+    businessName: string
+    tone?: string
+    includeImages?: boolean
+    template?: string
+    contact?: {
+      phone?: string
+      email?: string
+      address?: string
+    }
+  }) => api.post<LandingPage>('/landing-pages/generate-ai', data),
+  
   update: (id: string, data: Partial<LandingPage>) =>
     api.put<LandingPage>(`/landing-pages/${id}`, data),
   

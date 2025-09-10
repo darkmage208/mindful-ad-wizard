@@ -15,6 +15,6 @@ router.use(authenticate);
 
 router.post('/chat', validate(aiSchemas.chat), asyncHandler(chat));
 router.post('/generate-content', validate(aiSchemas.generateContent), asyncHandler(generateContent));
-router.post('/analyze/:campaignId', asyncHandler(analyzeCampaign));
+router.post('/analyze/:campaignId', validate(aiSchemas.analyzeCampaign), asyncHandler(analyzeCampaign));
 
 export default router;

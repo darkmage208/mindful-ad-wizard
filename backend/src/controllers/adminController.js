@@ -8,11 +8,17 @@ import {
   NotFoundError,
   ForbiddenError,
 } from '../middleware/errorHandler.js';
+import {
+  createPaginatedResponse,
+  buildPaginationParams,
+  buildSearchFilter,
+  asyncControllerHandler,
+} from '../utils/controllerHelpers.js';
 
 /**
  * Get system statistics
  */
-export const getSystemStats = async (req, res) => {
+export const getSystemStats = asyncControllerHandler(async (req, res) => {
   const [userStats, campaignStats, leadStats, revenueStats] = await Promise.all([
     // User statistics
     prisma.user.groupBy({
@@ -92,33 +98,27 @@ export const getSystemStats = async (req, res) => {
       },
     },
   });
-};
+});
 
 /**
  * Get all users (admin only)
  */
-export const getUsers = async (req, res) => {
-  const { page = 1, limit = 20, role, status, search } = req.query;
-  const skip = (page - 1) * limit;
+export const getUsers = asyncControllerHandler(async (req, res) => {
+  const { role, status, search } = req.query;
+  const { page, limit, skip } = buildPaginationParams(req.query);
   
   const where = {
     ...(role && { role }),
     ...(status === 'active' && { isActive: true }),
     ...(status === 'inactive' && { isActive: false }),
-    ...(search && {
-      OR: [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        { company: { contains: search, mode: 'insensitive' } },
-      ],
-    }),
+    ...buildSearchFilter(search, ['name', 'email', 'company']),
   };
 
   const [users, total] = await Promise.all([
     prisma.user.findMany({
       where,
       skip,
-      take: parseInt(limit),
+      take: limit,
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
@@ -143,22 +143,14 @@ export const getUsers = async (req, res) => {
 
   res.json({
     success: true,
-    data: {
-      users,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / limit),
-      },
-    },
+    data: createPaginatedResponse(users, page, limit, total),
   });
-};
+});
 
 /**
  * Get user by ID (admin only)
  */
-export const getUserById = async (req, res) => {
+export const getUserById = asyncControllerHandler(async (req, res) => {
   const { id } = req.params;
   
   const user = await prisma.user.findUnique({
@@ -214,12 +206,12 @@ export const getUserById = async (req, res) => {
     success: true,
     data: { user },
   });
-};
+});
 
 /**
  * Update user (admin only)
  */
-export const updateUser = async (req, res) => {
+export const updateUser = asyncControllerHandler(async (req, res) => {
   const { id } = req.params;
   const { role, isActive, isVerified } = req.body;
   const adminUserId = req.user.id;
@@ -259,12 +251,12 @@ export const updateUser = async (req, res) => {
     message: 'User updated successfully',
     data: { user },
   });
-};
+});
 
 /**
  * Delete user (admin only)
  */
-export const deleteUser = async (req, res) => {
+export const deleteUser = asyncControllerHandler(async (req, res) => {
   const { id } = req.params;
   const adminUserId = req.user.id;
 
@@ -306,14 +298,14 @@ export const deleteUser = async (req, res) => {
     success: true,
     message: 'User deleted successfully',
   });
-};
+});
 
 /**
  * Get all campaigns (admin only)
  */
-export const getAllCampaigns = async (req, res) => {
-  const { page = 1, limit = 20, status, platform, userId } = req.query;
-  const skip = (page - 1) * limit;
+export const getAllCampaigns = asyncControllerHandler(async (req, res) => {
+  const { status, platform, userId } = req.query;
+  const { page, limit, skip } = buildPaginationParams(req.query);
   
   const where = {
     ...(status && { status }),
@@ -325,7 +317,7 @@ export const getAllCampaigns = async (req, res) => {
     prisma.campaign.findMany({
       where,
       skip,
-      take: parseInt(limit),
+      take: limit,
       orderBy: { createdAt: 'desc' },
       include: {
         user: {
@@ -348,22 +340,14 @@ export const getAllCampaigns = async (req, res) => {
 
   res.json({
     success: true,
-    data: {
-      campaigns,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / limit),
-      },
-    },
+    data: createPaginatedResponse(campaigns, page, limit, total),
   });
-};
+});
 
 /**
  * Get system health status
  */
-export const getSystemHealth = async (req, res) => {
+export const getSystemHealth = asyncControllerHandler(async (req, res) => {
   const healthChecks = await Promise.allSettled([
     // Database check
     prisma.$queryRaw`SELECT 1`,
@@ -413,4 +397,4 @@ export const getSystemHealth = async (req, res) => {
       services: systemHealth,
     },
   });
-};
+});

@@ -4,7 +4,6 @@ import { sendLeadNotification } from '../services/emailService.js';
 import {
   AppError,
   NotFoundError,
-  ValidationError,
 } from '../middleware/errorHandler.js';
 
 /**

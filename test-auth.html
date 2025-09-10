@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Auth</title>
+</head>
+<body>
+    <h1>Authentication Test</h1>
+    <div id="result"></div>
+    <script>
+        const resultDiv = document.getElementById('result');
+        
+        // Test login
+        async function testLogin() {
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'newuser@example.com',
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Login response:', data);
+                resultDiv.innerHTML += '<p>Login: ' + (data.success ? 'SUCCESS' : 'FAILED') + '</p>';
+                resultDiv.innerHTML += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                if (data.success && data.data.accessToken) {
+                    // Test protected route
+                    const meResponse = await fetch('http://localhost:5000/api/auth/me', {
+                        headers: {
+                            'Authorization': 'Bearer ' + data.data.accessToken
+                        }
+                    });
+                    const meData = await meResponse.json();
+                    console.log('Me response:', meData);
+                    resultDiv.innerHTML += '<p>Me endpoint: ' + (meData.success ? 'SUCCESS' : 'FAILED') + '</p>';
+                    resultDiv.innerHTML += '<pre>' + JSON.stringify(meData, null, 2) + '</pre>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML += '<p>Error: ' + error.message + '</p>';
+            }
+        }
+        
+        // Test registration
+        async function testRegister() {
+            const randomEmail = 'test' + Date.now() + '@example.com';
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: 'Test User',
+                        email: randomEmail,
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Register response:', data);
+                resultDiv.innerHTML += '<p>Register: ' + (data.success ? 'SUCCESS' : 'FAILED') + '</p>';
+                resultDiv.innerHTML += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML += '<p>Error: ' + error.message + '</p>';
+            }
+        }
+        
+        // Run tests
+        testLogin();
+        // testRegister();
+    </script>
+</body>
+</html>
