@@ -1,4 +1,4 @@
-version: '3.8'
+# Removed version - Docker Compose v2 doesn't need it
 
 services:
   postgres:
