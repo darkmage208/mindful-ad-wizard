@@ -1,6 +1,5 @@
 version: '3.8'
 
-# Production Docker Compose with optimizations
 services:
   postgres:
     image: postgres:15-alpine
@@ -9,71 +8,31 @@ services:
       POSTGRES_DB: mindful_ad_wizard
       POSTGRES_USER: mindful_user
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_INITDB_ARGS: "--auth-host=md5"
+      POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
-      - postgres_prod_data:/var/lib/postgresql/data
-      - ./backup:/backup
-    ports:
-      - "127.0.0.1:5432:5432"  # Only bind to localhost in production
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
-      - mindful_prod_network
+      - mindful_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mindful_user -d mindful_ad_wizard"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 2G
-        reservations:
-          cpus: '1'
-          memory: 1G
-    command: >
-      postgres
-      -c shared_preload_libraries=pg_stat_statements
-      -c pg_stat_statements.track=all
-      -c max_connections=200
-      -c shared_buffers=256MB
-      -c effective_cache_size=1GB
-      -c work_mem=4MB
-      -c maintenance_work_mem=64MB
-      -c random_page_cost=1.1
-      -c temp_file_limit=2GB
-      -c log_min_duration_statement=1000
-      -c log_connections=on
-      -c log_disconnections=on
-      -c log_lock_waits=on
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: >
-      redis-server
-      --appendonly yes
-      --replica-read-only no
-      --maxmemory 256mb
-      --maxmemory-policy allkeys-lru
+    command: redis-server --appendonly yes --replica-read-only no
     volumes:
-      - redis_prod_data:/data
-    ports:
-      - "127.0.0.1:6379:6379"  # Only bind to localhost
+      - redis_data:/data
     networks:
-      - mindful_prod_network
+      - mindful_network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
+      interval: 10s
+      timeout: 5s
       retries: 3
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-        reservations:
-          cpus: '0.1'
-          memory: 128M
 
   backend:
     build:
@@ -100,38 +59,20 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - FROM_EMAIL=${FROM_EMAIL}
       - FROM_NAME=${FROM_NAME}
-      - CLIENT_URL=${CLIENT_URL}
+      - CLIENT_URL=https://autonomiapro.com.br
       - PORT=5000
-      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
-      - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-100}
-    expose:
-      - "5000"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     networks:
-      - mindful_prod_network
+      - mindful_network
     volumes:
-      - backend_prod_logs:/app/logs
-      - backend_prod_uploads:/app/uploads
-    deploy:
-      replicas: 2
-      resources:
-        limits:
-          cpus: '1'
-          memory: 1G
-        reservations:
-          cpus: '0.5'
-          memory: 512M
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 120s
+      - backend_logs:/app/logs
+      - backend_uploads:/app/uploads
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/api/admin/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -143,112 +84,72 @@ services:
       dockerfile: Dockerfile
       target: production
       args:
-        - VITE_API_URL=${VITE_API_URL}
+        - VITE_API_URL=https://autonomiapro.com.br/api
     restart: unless-stopped
-    expose:
-      - "80"
+    depends_on:
+      - backend
     networks:
-      - mindful_prod_network
+      - mindful_network
     volumes:
-      - frontend_prod_logs:/var/log/nginx
-    deploy:
-      replicas: 2
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-        reservations:
-          cpus: '0.1'
-          memory: 128M
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - frontend_logs:/var/log/nginx
 
   nginx:
     build:
       context: ./nginx
       dockerfile: Dockerfile
+      args:
+        - ENV=prod
     restart: unless-stopped
     ports:
-      - "${HTTP_PORT:-80}:80"
-      - "${HTTPS_PORT:-443}:443"
+      - "80:80"
+      - "443:443"
     depends_on:
       - frontend
       - backend
     networks:
-      - mindful_prod_network
+      - mindful_network
     volumes:
-      - nginx_prod_logs:/var/log/nginx
-      - nginx_certs:/etc/nginx/certs:ro
+      - nginx_logs:/var/log/nginx
+      - nginx_certs:/etc/nginx/certs
       - nginx_conf:/etc/nginx/conf.d
+      - certbot_data:/var/www/certbot
+      - certbot_certs:/etc/letsencrypt
     environment:
-      - DOMAIN=${DOMAIN:-localhost}
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 64M
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - FRONTEND_HOST=frontend
+      - BACKEND_HOST=backend
+      - BACKEND_PORT=5000
+      - DOMAIN=autonomiapro.com.br
 
-  # Backup service for automated database backups
-  backup:
-    image: postgres:15-alpine
+  certbot:
+    image: certbot/certbot:latest
     restart: "no"
-    environment:
-      - PGPASSWORD=${POSTGRES_PASSWORD}
     volumes:
-      - ./backup:/backup
-      - ./scripts:/scripts:ro
-    networks:
-      - mindful_prod_network
-    depends_on:
-      - postgres
-    command: |
-      sh -c '
-        while true; do
-          echo "Starting backup at $$(date)"
-          pg_dump -h postgres -U mindful_user -d mindful_ad_wizard > /backup/backup_$$(date +%Y%m%d_%H%M%S).sql
-          echo "Backup completed at $$(date)"
-          find /backup -name "backup_*.sql" -mtime +7 -delete
-          sleep 86400
-        done
-      '
-    deploy:
-      resources:
-        limits:
-          cpus: '0.1'
-          memory: 128M
+      - certbot_data:/var/www/certbot
+      - certbot_certs:/etc/letsencrypt
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 volumes:
-  postgres_prod_data:
+  postgres_data:
     driver: local
-  redis_prod_data:
+  redis_data:
     driver: local
-  backend_prod_logs:
+  backend_logs:
     driver: local
-  backend_prod_uploads:
+  backend_uploads:
     driver: local
-  frontend_prod_logs:
+  frontend_logs:
     driver: local
-  nginx_prod_logs:
+  nginx_logs:
     driver: local
   nginx_certs:
     driver: local
   nginx_conf:
     driver: local
+  certbot_data:
+    driver: local
+  certbot_certs:
+    driver: local
 
 networks:
-  mindful_prod_network:
+  mindful_network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16

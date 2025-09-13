@@ -5,7 +5,10 @@ RUN apk add --no-cache curl
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
-COPY default.conf /etc/nginx/conf.d/default.conf
+
+# Copy environment-specific configuration
+ARG ENV=development
+COPY default.${ENV}.conf /etc/nginx/conf.d/default.conf
 
 # Create necessary directories
 RUN mkdir -p /var/log/nginx /etc/nginx/certs /etc/nginx/conf.d
