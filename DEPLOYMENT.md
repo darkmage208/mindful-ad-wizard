@@ -1,202 +1,276 @@
-# Deployment Guide for Mindful Ad Wizard
+# Production Deployment Guide
 
-This guide covers deploying the Mindful Ad Wizard application to your Hostinger VPS with the domain `autonomiapro.com.br`.
+This guide provides step-by-step instructions for deploying Mindful Ad Wizard to production on your Hostinger VPS with domain `autonomiapro.com.br`.
 
 ## Prerequisites
 
-1. VPS with Docker and Docker Compose installed
-2. Domain `autonomiapro.com.br` pointing to your VPS IP
-3. All required environment variables configured
+1. **VPS Requirements:**
+   - Ubuntu/Debian server
+   - Docker and Docker Compose installed
+   - Root or sudo access
 
-## Files Overview
+2. **Domain Setup:**
+   - `autonomiapro.com.br` pointing to your VPS IP address
+   - Both `autonomiapro.com.br` and `www.autonomiapro.com.br` DNS records
 
-- `docker compose.yml` - Local development environment
-- `docker compose.dev.yml` - Development environment (copy of docker compose.yml)
-- `docker compose.prod.yml` - Production environment with SSL
-- `.env.prod` - Production environment variables
-- `setup-ssl.sh` - SSL certificate setup script
+3. **Firewall Configuration:**
+   - Ports 22 (SSH), 80 (HTTP), 443 (HTTPS) open
+   - Configure both server firewall and Hostinger VPS panel firewall
 
-## Production Deployment Steps
+## File Structure
 
-### 1. Prepare Environment Variables
+After refactoring, you have these essential files:
 
-Copy `.env.prod` and fill in all required values:
-
-```bash
-cp .env.prod .env
+```
+mindful-ad-wizard/
+├── docker-compose.yml          # Development environment
+├── docker-compose.prod.yml     # Production environment
+├── .env.prod                   # Production environment template
+├── deploy.sh                   # Production deployment script
+├── setup-ssl.sh               # SSL certificate setup
+├── nginx/
+│   ├── nginx.conf             # Main nginx configuration
+│   └── default.conf           # Server blocks (HTTP & HTTPS)
+└── DEPLOYMENT.md              # This file
 ```
 
-Edit `.env` with your production values:
-- Database passwords
-- JWT secrets (minimum 32 characters)
-- API keys (OpenAI, Meta, Google)
-- Email configuration
-- Domain settings
+## Step-by-Step Deployment
 
-### 2. Set Up SSL Certificates
+### Step 1: Environment Configuration
 
-Before starting the application, set up SSL certificates:
+1. **Copy and configure environment variables:**
+   ```bash
+   cp .env.prod .env
+   nano .env
+   ```
+
+2. **Fill in required values in `.env`:**
+   ```env
+   # Database (REQUIRED)
+   POSTGRES_PASSWORD=your_secure_database_password
+
+   # JWT Security (REQUIRED - minimum 32 characters each)
+   JWT_SECRET=your_super_secure_jwt_secret_key_minimum_32_chars
+   JWT_REFRESH_SECRET=your_super_secure_refresh_secret_key_minimum_32_chars
+
+   # API Keys
+   OPENAI_API_KEY=sk-your_openai_key_here
+   META_APP_ID=your_meta_app_id
+   META_APP_SECRET=your_meta_app_secret
+   META_ACCESS_TOKEN=your_meta_access_token
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   GOOGLE_DEVELOPER_TOKEN=your_google_developer_token
+
+   # Email Configuration
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_USER=your_email@gmail.com
+   SMTP_PASS=your_app_password
+   FROM_EMAIL=noreply@autonomiapro.com.br
+   FROM_NAME=Autonomia Pro
+   ```
+
+### Step 2: Firewall Setup
+
+1. **Configure UFW firewall:**
+   ```bash
+   # Enable firewall with required ports
+   sudo ufw allow 22
+   sudo ufw allow 80
+   sudo ufw allow 443
+   sudo ufw --force enable
+   sudo ufw status
+   ```
+
+2. **Configure Hostinger VPS firewall:**
+   - Login to Hostinger control panel
+   - Navigate to VPS Management → Firewall/Security
+   - Ensure ports 22, 80, and 443 are open from `0.0.0.0/0`
+
+### Step 3: Deploy to Production
+
+1. **Run the deployment script:**
+   ```bash
+   ./deploy.sh
+   ```
+
+   This script will:
+   - Check environment configuration
+   - Stop any existing containers
+   - Build and start all production services
+   - Verify services are running
+   - Test local connectivity
+   - Display deployment status
+
+2. **Verify deployment:**
+   ```bash
+   # Check container status
+   docker compose -f docker-compose.prod.yml ps
+
+   # Test local connectivity
+   curl -I http://localhost/health
+
+   # Test external connectivity (from local computer)
+   curl -I http://autonomiapro.com.br/health
+   ```
+
+### Step 4: SSL Certificate Setup
+
+1. **Ensure external connectivity works:**
+   From your local computer (not the VPS), test:
+   ```bash
+   curl -I http://autonomiapro.com.br/health
+   telnet autonomiapro.com.br 80
+   ```
+
+2. **Set up SSL certificates:**
+   ```bash
+   ./setup-ssl.sh
+   ```
+
+   This script will:
+   - Verify production environment is running
+   - Confirm external connectivity
+   - Obtain Let's Encrypt SSL certificates
+   - Reload nginx with SSL configuration
+
+3. **Verify SSL setup:**
+   ```bash
+   # Test HTTPS
+   curl -I https://autonomiapro.com.br/health
+   
+   # Check certificate
+   openssl s_client -connect autonomiapro.com.br:443 -servername autonomiapro.com.br
+   ```
+
+## Environment Management
+
+### Development Environment
 
 ```bash
-# Make sure the setup script is executable
-chmod +x setup-ssl.sh
+# Start development environment with PgAdmin
+docker compose --profile dev up -d
 
-# Run the SSL setup
-./setup-ssl.sh
-```
-
-This will:
-- Create necessary certificate directories
-- Start a temporary nginx container
-- Obtain Let's Encrypt certificates for autonomiapro.com.br
-- Create a renewal script
-
-### 3. Deploy to Production
-
-Once SSL is set up, deploy the application:
-
-```bash
-docker compose -f docker compose.prod.yml up -d
-```
-
-This single command will:
-- Build and start all services
-- Configure nginx with SSL
-- Set up automatic certificate renewal
-- Start the application on https://autonomiapro.com.br
-
-### 4. Verify Deployment
-
-Check that all services are running:
-
-```bash
-docker compose -f docker compose.prod.yml ps
-```
-
-Test the application:
-- Visit https://autonomiapro.com.br
-- Check API health: https://autonomiapro.com.br/api/health
-- Verify SSL certificate is valid
-
-## Local Development
-
-For local development, use the standard docker compose:
-
-```bash
-# Start development environment
-docker compose up -d
-
-# Access the application
+# Access points:
 # Frontend: http://localhost:3000
-# Backend: http://localhost:5000
-# Database Admin: http://localhost:8080
+# Backend:  http://localhost:5000
+# PgAdmin:  http://localhost:8080
 ```
 
-The development environment includes:
-- Hot reload for frontend and backend
-- PgAdmin for database management
-- No SSL (HTTP only)
-
-## Environment Variables
-
-### Required Production Variables
-
-```env
-# Database
-POSTGRES_PASSWORD=your_secure_password
-
-# Security
-JWT_SECRET=your_32_char_minimum_secret
-JWT_REFRESH_SECRET=your_32_char_minimum_refresh_secret
-
-# APIs
-OPENAI_API_KEY=sk-...
-META_APP_ID=...
-META_APP_SECRET=...
-META_ACCESS_TOKEN=...
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
-GOOGLE_DEVELOPER_TOKEN=...
-
-# Email
-SMTP_USER=your_email@gmail.com
-SMTP_PASS=your_app_password
-
-# Domain
-DOMAIN=autonomiapro.com.br
-```
-
-## SSL Certificate Renewal
-
-SSL certificates are automatically renewed by the certbot service. You can also manually renew:
+### Production Environment
 
 ```bash
-# Run the renewal script
-./renew-ssl.sh
+# Deploy to production
+./deploy.sh
 
-# Or manually with docker
-docker compose -f docker compose.prod.yml exec certbot certbot renew
-docker compose -f docker compose.prod.yml exec nginx nginx -s reload
+# View logs
+docker compose -f docker-compose.prod.yml logs
+
+# Restart services
+docker compose -f docker-compose.prod.yml restart
+
+# Stop production
+docker compose -f docker-compose.prod.yml down
+```
+
+## Monitoring and Maintenance
+
+### Health Checks
+
+```bash
+# Check all services
+docker compose -f docker-compose.prod.yml ps
+
+# Health endpoint
+curl http://localhost/health
+
+# Service-specific logs
+docker compose -f docker-compose.prod.yml logs nginx
+docker compose -f docker-compose.prod.yml logs backend
+```
+
+### SSL Certificate Renewal
+
+SSL certificates automatically renew via the certbot container. Manual renewal:
+
+```bash
+# Manual renewal
+docker compose -f docker-compose.prod.yml run --rm certbot certbot renew
+docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
+```
+
+### Backup Strategy
+
+```bash
+# Database backup
+docker compose -f docker-compose.prod.yml exec postgres pg_dump -U mindful_user mindful_ad_wizard > backup_$(date +%Y%m%d).sql
+
+# File uploads backup
+docker cp $(docker compose -f docker-compose.prod.yml ps -q backend):/app/uploads ./uploads_backup_$(date +%Y%m%d)
 ```
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **SSL Certificate Issues**
-   - Ensure domain points to your VPS
-   - Check firewall allows ports 80 and 443
-   - Run `./setup-ssl.sh` again
+1. **Services won't start:**
+   ```bash
+   # Check logs
+   docker compose -f docker-compose.prod.yml logs
+   
+   # Check environment variables
+   docker compose -f docker-compose.prod.yml config
+   ```
 
-2. **Application Not Starting**
-   - Check logs: `docker compose -f docker compose.prod.yml logs`
-   - Verify environment variables in `.env`
-   - Ensure all services are healthy
+2. **SSL certificate fails:**
+   - Verify firewall allows port 80
+   - Confirm DNS points to correct IP
+   - Test external connectivity first
 
-3. **Database Connection Issues**
-   - Check PostgreSQL is running: `docker compose -f docker compose.prod.yml ps postgres`
-   - Verify DATABASE_URL format
-   - Check database initialization logs
+3. **Database connection issues:**
+   ```bash
+   # Check database logs
+   docker compose -f docker-compose.prod.yml logs postgres
+   
+   # Verify database is healthy
+   docker compose -f docker-compose.prod.yml ps postgres
+   ```
 
-### Useful Commands
+### Recovery Commands
 
 ```bash
-# View logs
-docker compose -f docker compose.prod.yml logs [service_name]
+# Complete restart
+docker compose -f docker-compose.prod.yml down
+./deploy.sh
 
-# Restart a service
-docker compose -f docker compose.prod.yml restart [service_name]
+# Rebuild containers
+docker compose -f docker-compose.prod.yml down
+docker compose -f docker-compose.prod.yml up -d --build
 
-# Update and rebuild
-docker compose -f docker compose.prod.yml down
-docker compose -f docker compose.prod.yml up -d --build
-
-# Access container shell
-docker compose -f docker compose.prod.yml exec [service_name] sh
+# View real-time logs
+docker compose -f docker-compose.prod.yml logs -f
 ```
 
 ## Security Considerations
 
-1. **Environment Variables**: Never commit `.env` files to version control
-2. **Firewall**: Only allow necessary ports (22, 80, 443)
-3. **Updates**: Regularly update Docker images and system packages
-4. **Backups**: Set up regular database backups
-5. **Monitoring**: Monitor application logs and resource usage
+1. **Environment Variables:** Never commit `.env` files to version control
+2. **Firewall:** Only allow necessary ports
+3. **SSL:** Always use HTTPS in production
+4. **Updates:** Regularly update Docker images and system packages
+5. **Backups:** Implement regular automated backups
 
-## Backup Strategy
+## Quick Reference
 
-Set up regular backups of:
-- PostgreSQL database
-- User uploads
-- SSL certificates
-- Environment configuration
+| Command | Purpose |
+|---------|---------|
+| `./deploy.sh` | Deploy to production |
+| `./setup-ssl.sh` | Set up SSL certificates |
+| `docker compose -f docker-compose.prod.yml ps` | Check service status |
+| `docker compose -f docker-compose.prod.yml logs` | View logs |
+| `docker compose -f docker-compose.prod.yml restart` | Restart services |
+| `docker compose -f docker-compose.prod.yml down` | Stop production |
 
-Example backup script:
-
-```bash
-# Database backup
-docker compose -f docker compose.prod.yml exec postgres pg_dump -U mindful_user mindful_ad_wizard > backup_$(date +%Y%m%d).sql
-
-# File uploads backup
-docker cp $(docker compose -f docker compose.prod.yml ps -q backend):/app/uploads ./uploads_backup_$(date +%Y%m%d)
-```
+Your production application will be available at:
+- **HTTP:** http://autonomiapro.com.br
+- **HTTPS:** https://autonomiapro.com.br (after SSL setup)
