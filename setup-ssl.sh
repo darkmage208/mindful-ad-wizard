@@ -50,13 +50,21 @@ docker compose -f docker-compose.prod.yml run --rm certbot \
 if [ $? -eq 0 ]; then
     echo "✅ SSL certificate obtained successfully!"
     
-    # Reload nginx to use new certificates
-    echo "🔄 Reloading nginx with SSL certificates..."
-    docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
+    # Switch to SSL-enabled nginx config
+    echo "🔄 Switching to SSL-enabled nginx configuration..."
+    cp ./nginx/default-ssl.conf ./nginx/default.conf
+    
+    # Restart nginx with SSL configuration
+    echo "🔄 Restarting nginx with SSL certificates..."
+    docker compose -f docker-compose.prod.yml restart nginx
+    
+    # Wait for nginx to restart
+    sleep 5
     
     echo ""
     echo "🎉 SSL setup complete!"
     echo "🌐 Your site is now available at: https://$DOMAIN"
+    echo "🔒 HTTP traffic is automatically redirected to HTTPS"
     echo ""
     echo "📋 Certificate renewal is automatic via the certbot container"
 else
