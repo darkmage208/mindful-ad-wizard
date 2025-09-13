@@ -22,19 +22,19 @@ if [ -z "$EMAIL" ]; then
     exit 1
 fi
 
-echo "=ç Using email: $EMAIL"
+echo "=ï¿½ Using email: $EMAIL"
 
 # Create directories for certificates
-echo "=Á Creating certificate directories..."
+echo "=ï¿½ Creating certificate directories..."
 mkdir -p ./certbot/www
 mkdir -p ./certbot/conf
 
 # Start nginx temporarily to handle HTTP challenges
-echo "=€ Starting temporary nginx for certificate validation..."
-docker-compose -f docker-compose.prod.yml up -d nginx
+echo "=ï¿½ Starting temporary nginx for certificate validation..."
+docker compose -f docker-compose.prod.yml up -d nginx
 
 # Wait for nginx to be ready
-echo "ó Waiting for nginx to start..."
+echo "ï¿½ Waiting for nginx to start..."
 sleep 10
 
 # Obtain SSL certificate
@@ -53,12 +53,12 @@ docker run --rm -it \
     -d www.$DOMAIN
 
 # Stop temporary nginx
-echo "=Ñ Stopping temporary nginx..."
-docker-compose -f docker-compose.prod.yml down
+echo "=ï¿½ Stopping temporary nginx..."
+docker compose -f docker-compose.prod.yml down
 
 echo " SSL certificate obtained successfully!"
 echo "= You can now start the production environment with SSL:"
-echo "   docker-compose -f docker-compose.prod.yml up -d"
+echo "   docker compose -f docker-compose.prod.yml up -d"
 
 # Create renewal script
 cat > renew-ssl.sh << EOF
@@ -71,12 +71,12 @@ docker run --rm -it \\
     renew --quiet
 
 # Reload nginx to use new certificates
-docker-compose -f docker-compose.prod.yml exec nginx nginx -s reload
+docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
 
 echo " SSL certificates renewed successfully!"
 EOF
 
 chmod +x renew-ssl.sh
 
-echo "=İ Created renew-ssl.sh script for certificate renewal"
-echo "=¡ Set up a cron job to run ./renew-ssl.sh monthly"
+echo "=ï¿½ Created renew-ssl.sh script for certificate renewal"
+echo "=ï¿½ Set up a cron job to run ./renew-ssl.sh monthly"

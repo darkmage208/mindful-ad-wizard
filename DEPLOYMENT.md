@@ -10,9 +10,9 @@ This guide covers deploying the Mindful Ad Wizard application to your Hostinger 
 
 ## Files Overview
 
-- `docker-compose.yml` - Local development environment
-- `docker-compose.dev.yml` - Development environment (copy of docker-compose.yml)
-- `docker-compose.prod.yml` - Production environment with SSL
+- `docker compose.yml` - Local development environment
+- `docker compose.dev.yml` - Development environment (copy of docker compose.yml)
+- `docker compose.prod.yml` - Production environment with SSL
 - `.env.prod` - Production environment variables
 - `setup-ssl.sh` - SSL certificate setup script
 
@@ -56,7 +56,7 @@ This will:
 Once SSL is set up, deploy the application:
 
 ```bash
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker compose.prod.yml up -d
 ```
 
 This single command will:
@@ -70,7 +70,7 @@ This single command will:
 Check that all services are running:
 
 ```bash
-docker-compose -f docker-compose.prod.yml ps
+docker compose -f docker compose.prod.yml ps
 ```
 
 Test the application:
@@ -80,11 +80,11 @@ Test the application:
 
 ## Local Development
 
-For local development, use the standard docker-compose:
+For local development, use the standard docker compose:
 
 ```bash
 # Start development environment
-docker-compose up -d
+docker compose up -d
 
 # Access the application
 # Frontend: http://localhost:3000
@@ -135,8 +135,8 @@ SSL certificates are automatically renewed by the certbot service. You can also 
 ./renew-ssl.sh
 
 # Or manually with docker
-docker-compose -f docker-compose.prod.yml exec certbot certbot renew
-docker-compose -f docker-compose.prod.yml exec nginx nginx -s reload
+docker compose -f docker compose.prod.yml exec certbot certbot renew
+docker compose -f docker compose.prod.yml exec nginx nginx -s reload
 ```
 
 ## Troubleshooting
@@ -149,12 +149,12 @@ docker-compose -f docker-compose.prod.yml exec nginx nginx -s reload
    - Run `./setup-ssl.sh` again
 
 2. **Application Not Starting**
-   - Check logs: `docker-compose -f docker-compose.prod.yml logs`
+   - Check logs: `docker compose -f docker compose.prod.yml logs`
    - Verify environment variables in `.env`
    - Ensure all services are healthy
 
 3. **Database Connection Issues**
-   - Check PostgreSQL is running: `docker-compose -f docker-compose.prod.yml ps postgres`
+   - Check PostgreSQL is running: `docker compose -f docker compose.prod.yml ps postgres`
    - Verify DATABASE_URL format
    - Check database initialization logs
 
@@ -162,17 +162,17 @@ docker-compose -f docker-compose.prod.yml exec nginx nginx -s reload
 
 ```bash
 # View logs
-docker-compose -f docker-compose.prod.yml logs [service_name]
+docker compose -f docker compose.prod.yml logs [service_name]
 
 # Restart a service
-docker-compose -f docker-compose.prod.yml restart [service_name]
+docker compose -f docker compose.prod.yml restart [service_name]
 
 # Update and rebuild
-docker-compose -f docker-compose.prod.yml down
-docker-compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker compose.prod.yml down
+docker compose -f docker compose.prod.yml up -d --build
 
 # Access container shell
-docker-compose -f docker-compose.prod.yml exec [service_name] sh
+docker compose -f docker compose.prod.yml exec [service_name] sh
 ```
 
 ## Security Considerations
@@ -195,8 +195,8 @@ Example backup script:
 
 ```bash
 # Database backup
-docker-compose -f docker-compose.prod.yml exec postgres pg_dump -U mindful_user mindful_ad_wizard > backup_$(date +%Y%m%d).sql
+docker compose -f docker compose.prod.yml exec postgres pg_dump -U mindful_user mindful_ad_wizard > backup_$(date +%Y%m%d).sql
 
 # File uploads backup
-docker cp $(docker-compose -f docker-compose.prod.yml ps -q backend):/app/uploads ./uploads_backup_$(date +%Y%m%d)
+docker cp $(docker compose -f docker compose.prod.yml ps -q backend):/app/uploads ./uploads_backup_$(date +%Y%m%d)
 ```
