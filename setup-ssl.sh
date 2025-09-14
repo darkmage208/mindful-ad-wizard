@@ -37,7 +37,7 @@ fi
 # Get SSL certificate
 echo "🔐 Obtaining SSL certificate from Let's Encrypt..."
 docker compose -f docker-compose.prod.yml run --rm certbot \
-    certbot certonly \
+    certonly \
     --webroot \
     --webroot-path=/var/www/certbot \
     --email $EMAIL \
