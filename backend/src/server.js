@@ -31,6 +31,9 @@ const { prisma } = await import('./utils/database.js');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy for nginx reverse proxy
+app.set('trust proxy', true);
+
 // Security middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
