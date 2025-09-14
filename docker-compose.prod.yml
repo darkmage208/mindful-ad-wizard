@@ -60,6 +60,7 @@ services:
       - FROM_EMAIL=${FROM_EMAIL}
       - FROM_NAME=${FROM_NAME}
       - CLIENT_URL=https://autonomiapro.com.br
+      - CORS_ORIGIN=${CORS_ORIGIN}
       - PORT=5000
     depends_on:
       postgres:
