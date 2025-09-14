@@ -31,8 +31,8 @@ const { prisma } = await import('./utils/database.js');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Trust proxy for nginx reverse proxy
-app.set('trust proxy', true);
+// Trust proxy for nginx reverse proxy (specific to avoid rate-limit error)
+app.set('trust proxy', 1);
 
 // Security middleware
 app.use(helmet({
@@ -93,6 +93,7 @@ const limiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  trustProxy: 1, // Trust first proxy (nginx)
 });
 
 app.use('/api/', limiter);
