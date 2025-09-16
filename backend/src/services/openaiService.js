@@ -450,43 +450,57 @@ Return ONLY the JSON, no additional text.
 /**
  * Generate images for landing page using DALL-E
  * @param {object} params - Image generation parameters
- * @returns {Promise<Array>} Generated image objects
+ * @returns {Promise<Object>} Generated images and warnings
  */
 export const generateLandingPageImages = async ({
   businessType,
   services,
   style = 'professional medical photography'
 }) => {
+  const result = {
+    images: [],
+    warnings: [],
+    success: true
+  };
+
   if (!openai) {
-    throw new Error('OpenAI service not configured');
+    result.success = false;
+    result.warnings.push('OpenAI service not configured - images cannot be generated');
+    return result;
   }
 
   try {
-    const images = [];
-    
     // Generate hero image
     const heroPrompt = `Professional ${style} of a modern ${businessType} office or clinic, clean and welcoming environment, natural lighting, ${style}, high quality, stock photo style`;
-    
-    const heroResponse = await openai.images.generate({
-      model: 'dall-e-3',
-      prompt: heroPrompt,
-      size: '1792x1024',
-      quality: 'standard',
-      n: 1,
-    });
 
-    if (heroResponse.data && heroResponse.data[0]) {
-      images.push({
-        url: heroResponse.data[0].url,
-        alt: `${businessType} professional environment`,
-        type: 'hero',
+    try {
+      const heroResponse = await openai.images.generate({
+        model: 'dall-e-3',
+        prompt: heroPrompt,
+        size: '1792x1024',
+        quality: 'standard',
+        n: 1,
       });
+
+      if (heroResponse.data && heroResponse.data[0]) {
+        result.images.push({
+          url: heroResponse.data[0].url,
+          alt: `${businessType} professional environment`,
+          type: 'hero',
+        });
+        logger.info('Hero image generated successfully', { businessType });
+      } else {
+        result.warnings.push('Hero image generation returned no data');
+      }
+    } catch (heroError) {
+      logger.warn('Hero image generation failed:', heroError.message);
+      result.warnings.push(`Hero image generation failed: ${heroError.message}`);
     }
 
     // Generate feature/service image
     if (services.length > 0) {
       const servicePrompt = `Professional illustration representing ${services[0]} services, ${style}, clean design, calming colors, no text, stock photo style`;
-      
+
       try {
         const serviceResponse = await openai.images.generate({
           model: 'dall-e-3',
@@ -497,26 +511,33 @@ export const generateLandingPageImages = async ({
         });
 
         if (serviceResponse.data && serviceResponse.data[0]) {
-          images.push({
+          result.images.push({
             url: serviceResponse.data[0].url,
             alt: `${services[0]} services`,
             type: 'feature',
           });
+          logger.info('Feature image generated successfully', { service: services[0] });
+        } else {
+          result.warnings.push('Feature image generation returned no data');
         }
       } catch (serviceError) {
         logger.warn('Service image generation failed:', serviceError.message);
+        result.warnings.push(`Feature image generation failed: ${serviceError.message}`);
       }
     }
 
-    logger.info('AI images generated for landing page', {
+    logger.info('AI image generation completed', {
       businessType,
-      imagesGenerated: images.length,
+      imagesGenerated: result.images.length,
+      warnings: result.warnings.length,
     });
 
-    return images;
+    return result;
   } catch (error) {
     logger.error('Landing page image generation failed:', error);
-    throw new Error(`Image generation failed: ${error.message}`);
+    result.success = false;
+    result.warnings.push(`Image generation service error: ${error.message}`);
+    return result;
   }
 };
 

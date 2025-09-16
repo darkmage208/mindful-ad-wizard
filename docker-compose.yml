@@ -44,6 +44,9 @@ services:
       dockerfile: Dockerfile
       target: development
     restart: unless-stopped
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://mindful_user:${POSTGRES_PASSWORD:-dev_password}@postgres:5432/mindful_ad_wizard

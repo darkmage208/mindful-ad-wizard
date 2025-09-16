@@ -135,12 +135,25 @@ export default function LiveLandingPage() {
       >
         {/* Hero Image */}
         {images && images.find(img => img.type === 'hero') && (
-          <div
-            className="absolute inset-0 bg-cover bg-center opacity-20"
-            style={{
-              backgroundImage: `url(${images.find(img => img.type === 'hero')?.url})`,
-            }}
-          />
+          <div className="absolute inset-0">
+            <img
+              src={images.find(img => img.type === 'hero')?.storedUrl || images.find(img => img.type === 'hero')?.url}
+              alt={images.find(img => img.type === 'hero')?.alt || 'Hero background'}
+              className="w-full h-full object-cover opacity-20"
+              onError={(e) => {
+                const heroImage = images.find(img => img.type === 'hero');
+                const fallbackUrl = heroImage?.fallbackUrl;
+
+                if (fallbackUrl && e.currentTarget.src !== fallbackUrl) {
+                  console.warn('Hero image failed, using fallback:', e.currentTarget.src);
+                  e.currentTarget.src = fallbackUrl;
+                } else {
+                  console.warn('Hero image and fallback failed, hiding image');
+                  e.currentTarget.style.display = 'none';
+                }
+              }}
+            />
+          </div>
         )}
         
         <div className="relative max-w-6xl mx-auto px-2 sm:px-0">
@@ -219,9 +232,27 @@ export default function LiveLandingPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-center">
               <div className="order-2 lg:order-1">
                 <img
-                  src={images.find(img => img.type === 'feature')?.url}
-                  alt={images.find(img => img.type === 'feature')?.alt}
+                  src={images.find(img => img.type === 'feature')?.storedUrl || images.find(img => img.type === 'feature')?.url}
+                  alt={images.find(img => img.type === 'feature')?.alt || 'Professional services'}
                   className="w-full h-auto rounded-xl shadow-lg"
+                  onError={(e) => {
+                    const featureImage = images.find(img => img.type === 'feature');
+                    const fallbackUrl = featureImage?.fallbackUrl;
+
+                    if (fallbackUrl && e.currentTarget.src !== fallbackUrl) {
+                      console.warn('Feature image failed, using fallback:', e.currentTarget.src);
+                      e.currentTarget.src = fallbackUrl;
+                    } else {
+                      console.warn('Feature image and fallback failed, hiding section');
+                      const section = e.currentTarget.closest('section');
+                      if (section) {
+                        section.style.display = 'none';
+                      }
+                    }
+                  }}
+                  onLoad={() => {
+                    console.log('Feature image loaded successfully');
+                  }}
                 />
               </div>
               <div className="order-1 lg:order-2 text-center lg:text-left">

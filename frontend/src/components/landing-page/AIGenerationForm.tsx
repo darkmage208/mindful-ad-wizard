@@ -101,16 +101,54 @@ export default function AIGenerationForm({ trigger }: AIGenerationFormProps) {
   const generateMutation = useMutation({
     mutationFn: (data: AIGenerationFormData) => landingPagesAPI.generateWithAI(data),
     onSuccess: (response) => {
+      const { data, warnings, imageGenerationStatus } = response.data;
+
+      // Show success message
       toast.success('AI-powered landing page generated successfully!', {
-        description: 'Your landing page has been created with professional content and images.',
-      })
-      queryClient.invalidateQueries({ queryKey: ['landing-pages'] })
-      setOpen(false)
-      reset()
-      
+        description: 'Your landing page has been created with professional content.',
+      });
+
+      // Show warnings if any
+      if (warnings && warnings.length > 0) {
+        warnings.forEach((warning: string) => {
+          // Show positive messages as info, warnings as warnings
+          if (warning.includes('successfully') || warning.includes('optimal performance')) {
+            toast.info('Image System', {
+              description: warning,
+              duration: 4000,
+            });
+          } else {
+            toast.warning('Image Generation Warning', {
+              description: warning,
+              duration: 6000,
+            });
+          }
+        });
+      }
+
+      // Show image generation status if applicable
+      if (imageGenerationStatus) {
+        const { requested, generated } = imageGenerationStatus;
+        if (requested && generated === 0) {
+          toast.error('Image Generation Failed', {
+            description: 'Landing page created without images. You can add images manually later.',
+            duration: 8000,
+          });
+        } else if (requested && generated < 2) {
+          toast.warning('Partial Image Generation', {
+            description: `Only ${generated} of 2 images were generated successfully.`,
+            duration: 6000,
+          });
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['landing-pages'] });
+      setOpen(false);
+      reset();
+
       // Navigate to edit the generated page
-      const pageId = response.data.data.landingPage.id
-      navigate(`/landing-pages/${pageId}/edit`)
+      const pageId = data.landingPage.id;
+      navigate(`/landing-pages/${pageId}/edit`);
     },
     onError: (error) => {
       console.error('Failed to generate landing page:', error)
