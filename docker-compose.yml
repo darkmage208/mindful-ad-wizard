@@ -111,8 +111,6 @@ services:
         condition: service_healthy
     networks:
       - mindful_network
-    profiles:
-      - dev
 
 volumes:
   postgres_data:
