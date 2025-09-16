@@ -97,12 +97,15 @@ export const leadsAPI = {
 
 export const landingPagesAPI = {
   getAll: () => api.get<LandingPage[]>('/landing-pages'),
-  
+
   getById: (id: string) => api.get<LandingPage>(`/landing-pages/${id}`),
-  
+
+  getPublicBySlug: (slug: string) =>
+    axios.get<{ success: boolean; data: { landingPage: LandingPage } }>(`${API_BASE_URL}/landing-pages/public/${slug}`),
+
   create: (data: Partial<LandingPage>) =>
     api.post<LandingPage>('/landing-pages', data),
-  
+
   generateWithAI: (data: {
     businessType: string
     targetAudience: string
@@ -117,10 +120,10 @@ export const landingPagesAPI = {
       address?: string
     }
   }) => api.post<LandingPage>('/landing-pages/generate-ai', data),
-  
+
   update: (id: string, data: Partial<LandingPage>) =>
     api.put<LandingPage>(`/landing-pages/${id}`, data),
-  
+
   delete: (id: string) => api.delete(`/landing-pages/${id}`),
 }
 

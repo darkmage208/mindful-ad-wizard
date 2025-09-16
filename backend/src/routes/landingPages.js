@@ -9,11 +9,15 @@ import {
   updateLandingPage,
   deleteLandingPage,
   generateLandingPageWithAI,
+  getPublicLandingPage,
 } from '../controllers/landingPageController.js';
 
 const router = express.Router();
 
-// All routes require authentication
+// Public routes (no authentication required)
+router.get('/public/:slug', asyncHandler(getPublicLandingPage));
+
+// Protected routes (require authentication)
 router.use(authenticate);
 
 router.post('/', validate(landingPageSchemas.create), asyncHandler(createLandingPage));

@@ -362,3 +362,52 @@ const getTemplateColors = (template) => {
 
   return colorSchemes[template] || colorSchemes['psychology-practice'];
 };
+
+/**
+ * Get public landing page by slug (no authentication required)
+ */
+export const getPublicLandingPage = asyncControllerHandler(async (req, res) => {
+  const { slug } = req.params;
+
+  // Extract slug from URL path
+  const url = `${process.env.FRONTEND_URL}/lp/${slug}`;
+
+  const landingPage = await prisma.landingPage.findFirst({
+    where: {
+      url,
+      isActive: true
+    },
+  });
+
+  if (!landingPage) {
+    throw new NotFoundError('Landing page not found');
+  }
+
+  // Increment visit count
+  await prisma.landingPage.update({
+    where: { id: landingPage.id },
+    data: { visits: { increment: 1 } },
+  });
+
+  // Don't return sensitive user information for public access
+  const publicLandingPage = {
+    id: landingPage.id,
+    name: landingPage.name,
+    url: landingPage.url,
+    template: landingPage.template,
+    colors: landingPage.colors,
+    content: landingPage.content,
+    contact: landingPage.contact,
+    seo: landingPage.seo,
+    visits: landingPage.visits + 1,
+    conversions: landingPage.conversions,
+    isActive: landingPage.isActive,
+    createdAt: landingPage.createdAt,
+    updatedAt: landingPage.updatedAt,
+  };
+
+  res.json({
+    success: true,
+    data: { landingPage: publicLandingPage },
+  });
+});

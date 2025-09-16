@@ -10,6 +10,7 @@ import {
   Clock,
   Loader2,
   AlertCircle,
+  MessageCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -24,18 +25,9 @@ export default function LiveLandingPage() {
       if (!slug) return
 
       try {
-        // In a real implementation, you'd have an endpoint that fetches by slug
-        // For now, we'll simulate this with a search through all landing pages
-        const response = await landingPagesAPI.getAll()
-        const pages = response.data.data?.landingPages || []
-        const page = pages.find(p => p.url.includes(slug))
-        
-        if (page) {
-          setLandingPage(page)
-          
-          // Update page visits
-          // Note: In production, you'd want this to be a separate endpoint
-          // to avoid authentication issues for public pages
+        const response = await landingPagesAPI.getPublicBySlug(slug)
+        if (response.data.success && response.data.data.landingPage) {
+          setLandingPage(response.data.data.landingPage)
         } else {
           setError('Landing page not found')
         }
@@ -95,15 +87,45 @@ export default function LiveLandingPage() {
   }, [seo])
 
   const handleCTAClick = () => {
-    // Scroll to contact section or trigger contact action
-    const contactSection = document.getElementById('contact-section')
-    if (contactSection) {
-      contactSection.scrollIntoView({ behavior: 'smooth' })
+    // If WhatsApp is available, open WhatsApp directly
+    if (contact.whatsapp) {
+      const message = `Hi! I'm interested in ${content.headline}. I'd like to know more about your services.`
+      const whatsappUrl = `https://wa.me/${contact.whatsapp.replace(/[^\d]/g, '')}?text=${encodeURIComponent(message)}`
+      window.open(whatsappUrl, '_blank')
+    } else {
+      // Fallback to contact section
+      const contactSection = document.getElementById('contact-section')
+      if (contactSection) {
+        contactSection.scrollIntoView({ behavior: 'smooth' })
+      }
+    }
+  }
+
+  const handleWhatsAppClick = () => {
+    if (contact.whatsapp) {
+      const message = `Hi! I found your landing page and I'm interested in your services. Could you please provide more information?`
+      const whatsappUrl = `https://wa.me/${contact.whatsapp.replace(/[^\d]/g, '')}?text=${encodeURIComponent(message)}`
+      window.open(whatsappUrl, '_blank')
+
+      // Optionally track conversion here
+      // This would be a good place to call an analytics endpoint
     }
   }
 
   return (
     <div className="min-h-screen">
+      {/* Floating WhatsApp Button */}
+      {contact.whatsapp && (
+        <button
+          onClick={handleWhatsAppClick}
+          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg hover:scale-110 transition-all duration-300 flex items-center justify-center"
+          style={{ backgroundColor: '#25D366' }}
+          aria-label="Contact us on WhatsApp"
+        >
+          <MessageCircle className="w-8 h-8 text-white" />
+        </button>
+      )}
+
       {/* Hero Section */}
       <section
         className="relative py-12 sm:py-16 md:py-20 px-4 sm:px-6 text-center min-h-[500px] sm:min-h-[600px] lg:min-h-[700px] flex items-center"
@@ -298,6 +320,21 @@ export default function LiveLandingPage() {
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-8 sm:mb-12 md:mb-16">Get In Touch</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-12 mb-12 sm:mb-16">
+            {contact.whatsapp && (
+              <div className="text-center">
+                <MessageCircle className="w-8 sm:w-10 md:w-12 h-8 sm:h-10 md:h-12 mx-auto mb-4 sm:mb-6" style={{ color: '#25D366' }} />
+                <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">WhatsApp Us</h3>
+                <p className="text-gray-300 text-base sm:text-lg">{contact.whatsapp}</p>
+                <Button
+                  className="mt-4 text-white hover:scale-105 transition-transform"
+                  style={{ backgroundColor: '#25D366', borderColor: '#25D366' }}
+                  onClick={handleWhatsAppClick}
+                >
+                  Start Conversation
+                </Button>
+              </div>
+            )}
+
             {contact.phone && (
               <div className="text-center">
                 <Phone className="w-8 sm:w-10 md:w-12 h-8 sm:h-10 md:h-12 mx-auto mb-4 sm:mb-6" style={{ color: colors.accent }} />

@@ -123,7 +123,7 @@ app.get('/health', async (req, res) => {
   try {
     // Test database connection
     await prisma.$queryRaw`SELECT 1`;
-    
+
     res.json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
@@ -139,6 +139,15 @@ app.get('/health', async (req, res) => {
     });
   }
 });
+
+// Test route
+app.get('/public/test', (req, res) => {
+  res.json({ success: true, message: 'Public route working' });
+});
+
+// Public landing page route (outside /api to avoid any middleware)
+const { getPublicLandingPage } = await import('./controllers/landingPageController.js');
+app.get('/public/lp/:slug', getPublicLandingPage);
 
 // API routes - import dynamically after env is loaded
 const apiRouter = express.Router();
