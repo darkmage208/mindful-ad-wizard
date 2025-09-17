@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { LandingPage } from '@/types'
+import { generateLandingPageUrl } from '@/lib/utils'
 import {
   Monitor,
   Smartphone,
@@ -32,7 +33,8 @@ export default function PreviewDialog({ landingPage, open, onOpenChange }: Previ
   }
 
   const handleLiveView = () => {
-    window.open(landingPage.url, '_blank')
+    const url = generateLandingPageUrl(landingPage.slug || landingPage.id)
+    window.open(url, '_blank')
   }
 
   return (
