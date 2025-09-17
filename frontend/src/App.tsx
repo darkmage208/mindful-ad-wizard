@@ -40,28 +40,32 @@ function App() {
   }
 
   return (
-    <Layout>
-      <Routes>
-        <Route path="/onboarding" element={<OnboardingForm />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/campaigns" element={<Campaigns />} />
-        <Route path="/campaigns/new" element={<NewCampaign />} />
-        <Route path="/campaigns/:id" element={<CampaignDetail />} />
-        <Route path="/campaigns/:id/edit" element={<NewCampaign />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/landing-pages" element={<LandingPages />} />
-        <Route path="/landing-pages/new" element={<NewLandingPage />} />
-        <Route path="/landing-pages/:id/edit" element={<NewLandingPage />} />
-        <Route path="/lp/:slug" element={<LiveLandingPage />} />
-        <Route path="/ai-chat" element={<AIChat />} />
-        <Route path="/settings" element={<Settings />} />
-        {user.role === 'admin' && (
-          <Route path="/admin" element={<AdminPanel />} />
-        )}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </Layout>
+    <Routes>
+      <Route path="/lp/:slug" element={<LiveLandingPage />} />
+      <Route path="/*" element={
+        <Layout>
+          <Routes>
+            <Route path="/onboarding" element={<OnboardingForm />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/campaigns" element={<Campaigns />} />
+            <Route path="/campaigns/new" element={<NewCampaign />} />
+            <Route path="/campaigns/:id" element={<CampaignDetail />} />
+            <Route path="/campaigns/:id/edit" element={<NewCampaign />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/landing-pages" element={<LandingPages />} />
+            <Route path="/landing-pages/new" element={<NewLandingPage />} />
+            <Route path="/landing-pages/:id/edit" element={<NewLandingPage />} />
+            <Route path="/ai-chat" element={<AIChat />} />
+            <Route path="/settings" element={<Settings />} />
+            {user.role === 'admin' && (
+              <Route path="/admin" element={<AdminPanel />} />
+            )}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </Layout>
+      } />
+    </Routes>
   )
 }
 

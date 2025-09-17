@@ -159,7 +159,7 @@ model LandingPage {
   id       String @id @default(cuid())
   userId   String
   name     String
-  url      String @unique
+  slug     String @unique
   template String
   
   // Customizations (JSON)

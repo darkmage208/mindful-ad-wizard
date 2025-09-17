@@ -307,6 +307,7 @@ export const generateLandingPageWithAI = asyncControllerHandler(async (req, res)
           keywords: generatedContent.keywords || services.join(', '),
         },
         images: images || [],
+        isActive: true,
       },
     });
 
@@ -371,6 +372,7 @@ const createPage = async (userId, name, template, slug, colors, content, contact
         phone: '',
         email: '',
       },
+      isActive: true,
     },
   });
 };
@@ -446,12 +448,13 @@ export const getPublicLandingPage = asyncControllerHandler(async (req, res) => {
   const publicLandingPage = {
     id: landingPage.id,
     name: landingPage.name,
-    url: landingPage.url,
+    slug: landingPage.slug,
     template: landingPage.template,
     colors: landingPage.colors,
     content: landingPage.content,
     contact: landingPage.contact,
     seo: landingPage.seo,
+    images: landingPage.images,
     visits: landingPage.visits + 1,
     conversions: landingPage.conversions,
     isActive: landingPage.isActive,
