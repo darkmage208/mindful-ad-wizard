@@ -73,8 +73,24 @@ export const commonSchemas = {
   // Name validation
   name: Joi.string().min(2).max(50).trim(),
   
-  // Phone validation
-  phone: Joi.string().pattern(/^[+]?[1-9]\d{1,14}$/).message('Invalid phone number format'),
+  // Phone validation - accepts common formats like +1 (518) 760-9790, (518) 760-9790, 518-760-9790, etc.
+  phone: Joi.string().custom((value, helpers) => {
+    // Remove all non-digit characters except + at start
+    const cleaned = value.replace(/[^\d+]/g, '');
+
+    // Check if it's a valid phone number
+    // Must have 7-15 digits, optionally starting with +
+    if (!/^\+?\d{7,15}$/.test(cleaned)) {
+      return helpers.error('any.invalid');
+    }
+
+    // If it starts with +, must have at least 8 digits total
+    if (cleaned.startsWith('+') && cleaned.length < 9) {
+      return helpers.error('any.invalid');
+    }
+
+    return value; // Return original value to preserve formatting
+  }).message('Invalid phone number format'),
   
   // URL validation
   url: Joi.string().uri(),

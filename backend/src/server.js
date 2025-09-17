@@ -199,31 +199,46 @@ app.use('*', (req, res) => {
 // Global error handler
 app.use(errorHandler);
 
+// Start server with extended timeout for AI operations
+const server = app.listen(PORT, () => {
+  logger.info(`🚀 Server running on port ${PORT}`);
+  logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`🔗 API URL: http://localhost:${PORT}/api`);
+  logger.info(`❤️ Health Check: http://localhost:${PORT}/health`);
+});
+
+// Set server timeout to 5 minutes for AI operations
+server.timeout = 300000; // 5 minutes in milliseconds
+server.keepAliveTimeout = 61000; // 61 seconds
+server.headersTimeout = 65000; // 65 seconds
+
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   logger.info('SIGTERM received, shutting down gracefully');
-  
+
+  // Close server
+  server.close(() => {
+    logger.info('HTTP server closed');
+  });
+
   // Close database connections
   await prisma.$disconnect();
-  
+
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
   logger.info('SIGINT received, shutting down gracefully');
-  
+
+  // Close server
+  server.close(() => {
+    logger.info('HTTP server closed');
+  });
+
   // Close database connections
   await prisma.$disconnect();
-  
-  process.exit(0);
-});
 
-// Start server
-app.listen(PORT, () => {
-  logger.info(`🚀 Server running on port ${PORT}`);
-  logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  logger.info(`🔗 API URL: http://localhost:${PORT}/api`);
-  logger.info(`❤️ Health Check: http://localhost:${PORT}/health`);
+  process.exit(0);
 });
 
 export default app;
