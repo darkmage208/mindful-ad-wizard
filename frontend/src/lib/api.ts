@@ -100,8 +100,12 @@ export const landingPagesAPI = {
 
   getById: (id: string) => api.get<LandingPage>(`/landing-pages/${id}`),
 
-  getPublicBySlug: (slug: string) =>
-    axios.get<{ success: boolean; data: { landingPage: LandingPage } }>(`${API_BASE_URL}/landing-pages/public/${slug}`),
+  getPublicBySlug: (slug: string) => {
+    const publicAPI = axios.create({
+      baseURL: API_BASE_URL,
+    })
+    return publicAPI.get<{ success: boolean; data: { landingPage: LandingPage } }>(`/landing-pages/public/${slug}`)
+  },
 
   create: (data: Partial<LandingPage>) =>
     api.post<LandingPage>('/landing-pages', data),

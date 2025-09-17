@@ -20,27 +20,69 @@ export default function LiveLandingPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // MUST call all hooks at the top, before any early returns
   useEffect(() => {
+    let mounted = true
+
     const fetchLandingPage = async () => {
-      if (!slug) return
+      if (!slug) {
+        if (mounted) {
+          setLoading(false)
+          setError('No page identifier provided')
+        }
+        return
+      }
 
       try {
         const response = await landingPagesAPI.getPublicBySlug(slug)
+        if (!mounted) return
+
         if (response.data.success && response.data.data.landingPage) {
           setLandingPage(response.data.data.landingPage)
         } else {
           setError('Landing page not found')
         }
       } catch (err) {
+        if (!mounted) return
+
         setError('Failed to load landing page')
         console.error('Failed to fetch landing page:', err)
       } finally {
-        setLoading(false)
+        if (mounted) {
+          setLoading(false)
+        }
       }
     }
 
     fetchLandingPage()
+
+    return () => {
+      mounted = false
+    }
   }, [slug])
+
+  // Set dynamic SEO - MOVED BEFORE EARLY RETURNS
+  useEffect(() => {
+    if (!landingPage) return
+
+    const seo = landingPage.seo
+
+    if (seo?.title) {
+      document.title = seo.title
+    }
+
+    if (seo?.description) {
+      const metaDescription = document.querySelector('meta[name="description"]')
+      if (metaDescription) {
+        metaDescription.setAttribute('content', seo.description)
+      }
+    }
+
+    // Cleanup function to reset title on unmount
+    return () => {
+      document.title = 'Mindful Ad Wizard'
+    }
+  }, [landingPage])
 
   if (loading) {
     return (
@@ -71,20 +113,6 @@ export default function LiveLandingPage() {
   }
 
   const { colors, content, contact, images, seo } = landingPage
-
-  // Set dynamic SEO
-  useEffect(() => {
-    if (seo?.title) {
-      document.title = seo.title
-    }
-    
-    if (seo?.description) {
-      const metaDescription = document.querySelector('meta[name="description"]')
-      if (metaDescription) {
-        metaDescription.setAttribute('content', seo.description)
-      }
-    }
-  }, [seo])
 
   const handleCTAClick = () => {
     // If WhatsApp is available, open WhatsApp directly

@@ -17,22 +17,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let mounted = true
+
+    const checkAuth = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (token && mounted) {
+          const response = await authAPI.me()
+          if (mounted) {
+            setUser(response.data.data.user)
+          }
+        }
+      } catch (error) {
+        if (mounted) {
+          localStorage.removeItem('token')
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false)
+        }
+      }
+    }
+
     checkAuth()
+
+    return () => {
+      mounted = false
+    }
   }, [])
 
-  const checkAuth = async () => {
-    try {
-      const token = localStorage.getItem('token')
-      if (token) {
-        const response = await authAPI.me()
-        setUser(response.data.data.user)
-      }
-    } catch (error) {
-      localStorage.removeItem('token')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const login = async (email: string, password: string) => {
     const response = await authAPI.login(email, password)
