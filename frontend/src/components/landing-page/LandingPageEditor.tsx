@@ -580,35 +580,77 @@ export default function LandingPageEditor({ landingPageId }: LandingPageEditorPr
               </div>
             </CardHeader>
             <CardContent>
-              <div 
-                className={`border rounded-lg overflow-hidden ${
+              <div
+                className={`border rounded-lg overflow-hidden transition-all duration-300 ${
                   previewDevice === 'desktop' ? 'w-full h-96' :
                   previewDevice === 'tablet' ? 'w-80 h-96 mx-auto' :
                   'w-64 h-96 mx-auto'
                 }`}
                 style={{ backgroundColor: '#f8fafc' }}
               >
-                <div 
-                  className="h-full p-4 text-center flex flex-col justify-center"
-                  style={{ 
-                    background: `linear-gradient(135deg, ${formData.colors.primary}20, ${formData.colors.accent}20)` 
+                <div
+                  className={`h-full text-center flex flex-col justify-center transition-all duration-300 ${
+                    previewDevice === 'desktop' ? 'p-6' :
+                    previewDevice === 'tablet' ? 'p-4' :
+                    'p-3'
+                  }`}
+                  style={{
+                    background: `linear-gradient(135deg, ${formData.colors.primary}20, ${formData.colors.accent}20)`
                   }}
                 >
-                  <h2 
-                    className="text-lg font-bold mb-2"
+                  <h2
+                    className={`font-bold mb-2 transition-all duration-300 ${
+                      previewDevice === 'desktop' ? 'text-xl' :
+                      previewDevice === 'tablet' ? 'text-lg' :
+                      'text-base'
+                    }`}
                     style={{ color: formData.colors.primary }}
                   >
                     {formData.content.headline}
                   </h2>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className={`text-gray-600 mb-4 transition-all duration-300 ${
+                    previewDevice === 'desktop' ? 'text-base px-4' :
+                    previewDevice === 'tablet' ? 'text-sm px-2' :
+                    'text-xs px-1'
+                  }`}>
                     {formData.content.subheadline}
                   </p>
-                  <div 
-                    className="inline-block px-4 py-2 rounded text-white text-sm font-medium"
+                  <div
+                    className={`inline-block rounded text-white font-medium transition-all duration-300 ${
+                      previewDevice === 'desktop' ? 'px-6 py-3 text-base' :
+                      previewDevice === 'tablet' ? 'px-4 py-2 text-sm' :
+                      'px-3 py-1.5 text-xs'
+                    }`}
                     style={{ backgroundColor: formData.colors.primary }}
                   >
                     {formData.content.cta}
                   </div>
+
+                  {/* Responsive features preview */}
+                  {formData.content.features.length > 0 && (
+                    <div className={`mt-4 transition-all duration-300 ${
+                      previewDevice === 'desktop' ? 'block' :
+                      previewDevice === 'tablet' ? 'block' :
+                      'hidden'
+                    }`}>
+                      <div className={`grid gap-2 ${
+                        previewDevice === 'desktop' ? 'grid-cols-2' :
+                        'grid-cols-1'
+                      }`}>
+                        {formData.content.features.slice(0, previewDevice === 'desktop' ? 4 : 2).map((feature, index) => (
+                          <div
+                            key={index}
+                            className={`text-center p-2 bg-white/50 rounded ${
+                              previewDevice === 'desktop' ? 'text-xs' :
+                              'text-[10px]'
+                            }`}
+                          >
+                            {feature}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>

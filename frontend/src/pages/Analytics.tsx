@@ -73,25 +73,25 @@ export default function Analytics() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Analytics</h1>
-          <p className="text-muted-foreground">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Analytics</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Track performance and get insights from your advertising campaigns.
           </p>
         </div>
-        <Button variant="outline">
-          <Download className="mr-2 h-4 w-4" />
+        <Button variant="outline" className="w-full sm:w-auto text-sm">
+          <Download className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
           Export Report
         </Button>
       </div>
 
       {/* Filters */}
-      <div className="flex space-x-4">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
         <div className="flex items-center space-x-2">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -102,11 +102,11 @@ export default function Analytics() {
             </SelectContent>
           </Select>
         </div>
-        
+
         <div className="flex items-center space-x-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           <Select value={selectedCampaign} onValueChange={setSelectedCampaign}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-full sm:w-[200px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

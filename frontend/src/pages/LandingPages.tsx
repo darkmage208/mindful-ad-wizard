@@ -5,8 +5,10 @@ import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import { landingPagesAPI } from '@/lib/api'
 import { LandingPage } from '@/types'
+import { generateLandingPageUrl } from '@/lib/utils'
 import AIGenerationForm from '@/components/landing-page/AIGenerationForm'
 import PreviewDialog from '@/components/landing-page/PreviewDialog'
 import {
@@ -22,6 +24,14 @@ import {
   Sparkles,
   Image,
   TrendingUp,
+  BarChart3,
+  MousePointer,
+  Users,
+  Clock,
+  Zap,
+  Filter,
+  Search,
+  Download,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -34,6 +44,10 @@ export default function LandingPages() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [previewPage, setPreviewPage] = useState<LandingPage | null>(null)
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; page: LandingPage | null }>({
+    open: false,
+    page: null,
+  })
   
   const { data: landingPages = [], isLoading } = useQuery({
     queryKey: ['landing-pages'],
@@ -52,10 +66,14 @@ export default function LandingPages() {
     },
   })
 
-  const handleDelete = async (id: string, name: string) => {
-    if (confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
-      deleteMutation.mutate(id)
-    }
+  const handleDeleteClick = (page: LandingPage) => {
+    setDeleteDialog({ open: true, page })
+  }
+
+  const handleDelete = () => {
+    if (!deleteDialog.page) return
+    deleteMutation.mutate(deleteDialog.page.id)
+    setDeleteDialog({ open: false, page: null })
   }
 
   const handlePreview = (page: LandingPage) => {
@@ -63,7 +81,8 @@ export default function LandingPages() {
   }
 
   const handleLiveView = (page: LandingPage) => {
-    window.open(page.url, '_blank')
+    const url = generateLandingPageUrl(page.slug || page.id)
+    window.open(url, '_blank')
   }
 
   const handleEdit = (id: string) => {
@@ -115,24 +134,50 @@ export default function LandingPages() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Landing Pages</h1>
-          <p className="text-muted-foreground">
-            Create and manage high-converting landing pages for your campaigns.
-          </p>
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+        <div className="space-y-2 min-w-0 flex-1">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+              <Globe className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold truncate">Landing Pages</h1>
+              <p className="text-muted-foreground flex items-center space-x-2 text-sm">
+                <span className="truncate">Create and manage high-converting pages</span>
+                <Zap className="w-4 h-4 flex-shrink-0" />
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full flex-shrink-0">Optimized</span>
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="flex space-x-2">
-          <AIGenerationForm 
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 xl:flex-shrink-0">
+          {/* Search and filters */}
+          <div className="hidden xl:flex items-center space-x-2 bg-muted/50 rounded-lg px-3 py-2 min-w-[200px]">
+            <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            <input
+              type="text"
+              placeholder="Search pages..."
+              className="bg-transparent border-0 outline-0 flex-1 text-sm placeholder:text-muted-foreground"
+            />
+          </div>
+
+          <Button variant="outline" size="sm" className="text-xs sm:text-sm">
+            <Filter className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+            Filter
+          </Button>
+
+          <AIGenerationForm
             trigger={
-              <Button>
-                <Sparkles className="mr-2 h-4 w-4" />
+              <Button className="btn-gradient text-xs sm:text-sm">
+                <Sparkles className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                 Generate with AI
               </Button>
             }
           />
-          <Button onClick={() => navigate('/landing-pages/new')} variant="outline">
-            <Plus className="mr-2 h-4 w-4" />
+
+          <Button onClick={() => navigate('/landing-pages/new')} variant="outline" className="text-xs sm:text-sm">
+            <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
             Create Manually
           </Button>
         </div>
@@ -140,56 +185,65 @@ export default function LandingPages() {
 
       {/* Landing Pages Grid */}
       {landingPages.length === 0 ? (
-        <Card>
+        <Card className="border-0 shadow-lg">
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <Globe className="h-16 w-16 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <div className="w-20 h-20 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl flex items-center justify-center mb-6">
+              <Globe className="w-10 h-10 text-green-600" />
+            </div>
+            <h3 className="text-2xl font-semibold mb-3">
               No landing pages yet
             </h3>
-            <p className="text-gray-500 text-center max-w-sm mb-6">
-              Create beautiful, conversion-optimized landing pages using AI or build them manually.
+            <p className="text-muted-foreground text-center max-w-md mb-8 leading-relaxed">
+              Create beautiful, conversion-optimized landing pages using AI or build them manually with our drag-and-drop editor.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <AIGenerationForm 
+            <div className="flex flex-col sm:flex-row gap-4">
+              <AIGenerationForm
                 trigger={
-                  <Button size="lg">
-                    <Sparkles className="mr-2 h-4 w-4" />
+                  <Button size="lg" className="btn-gradient">
+                    <Sparkles className="mr-2 h-5 w-5" />
                     Generate with AI
                   </Button>
                 }
               />
               <Button size="lg" variant="outline" onClick={() => navigate('/landing-pages/new')}>
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="mr-2 h-5 w-5" />
                 Create Manually
               </Button>
             </div>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
           {landingPages.map((page) => (
-            <Card key={page.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
+            <Card key={page.id} className="card-hover group border-0 shadow-md">
+              <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <CardTitle className="text-lg leading-tight">
-                        {page.name}
-                      </CardTitle>
-                      {page.images && page.images.length > 0 && (
-                        <Badge variant="secondary" className="text-xs">
-                          <Image className="w-3 h-3 mr-1" />
-                          AI Images
-                        </Badge>
-                      )}
+                    <div className="flex items-start space-x-3 mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Globe className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg leading-tight mb-1 group-hover:text-primary transition-colors">
+                          {page.name}
+                        </CardTitle>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="outline" className="text-xs">
+                            {page.template.replace('-', ' ')}
+                          </Badge>
+                          {page.images && page.images.length > 0 && (
+                            <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">
+                              <Image className="w-3 h-3 mr-1" />
+                              AI Images
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <CardDescription className="text-sm">
-                      {page.template.replace('-', ' ')} template
-                    </CardDescription>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -210,9 +264,13 @@ export default function LandingPages() {
                         <ExternalLink className="mr-2 h-4 w-4" />
                         View Live
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
+                      <DropdownMenuItem>
+                        <Download className="mr-2 h-4 w-4" />
+                        Export
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
                         className="text-red-600"
-                        onClick={() => handleDelete(page.id, page.name)}
+                        onClick={() => handleDeleteClick(page)}
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete
@@ -221,53 +279,75 @@ export default function LandingPages() {
                   </DropdownMenu>
                 </div>
               </CardHeader>
-              
+
               <CardContent>
                 <div className="space-y-4">
                   {/* Preview */}
-                  <div className="bg-gray-100 rounded-lg p-4 h-32 flex items-center justify-center">
+                  <div className="bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl p-6 h-36 flex items-center justify-center border">
                     <div className="text-center">
-                      <Globe className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500">{page.template} Template</p>
+                      <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center mx-auto mb-3 shadow-sm">
+                        <Globe className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        {page.template.replace('-', ' ')} Template
+                      </p>
                     </div>
                   </div>
 
                   {/* Stats */}
                   {page.metrics && (
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div className="text-center">
-                        <div className="font-medium">
-                          {page.metrics.visits.toLocaleString()}
+                    <div className="grid grid-cols-3 gap-3 text-sm">
+                      <div className="text-center p-2 bg-muted/30 rounded-lg">
+                        <div className="flex items-center justify-center mb-1">
+                          <Users className="w-3 h-3 mr-1 text-blue-600" />
+                          <span className="font-semibold text-blue-900">
+                            {page.metrics.visits.toLocaleString()}
+                          </span>
                         </div>
-                        <div className="text-muted-foreground">Visits</div>
+                        <div className="text-xs text-muted-foreground">Visits</div>
                       </div>
-                      <div className="text-center">
-                        <div className="font-medium">
-                          {page.metrics.conversionRate.toFixed(1)}%
+                      <div className="text-center p-2 bg-muted/30 rounded-lg">
+                        <div className="flex items-center justify-center mb-1">
+                          <MousePointer className="w-3 h-3 mr-1 text-green-600" />
+                          <span className="font-semibold text-green-900">
+                            {page.metrics.conversions}
+                          </span>
                         </div>
-                        <div className="text-muted-foreground">Conv. Rate</div>
+                        <div className="text-xs text-muted-foreground">Conv.</div>
+                      </div>
+                      <div className="text-center p-2 bg-muted/30 rounded-lg">
+                        <div className="flex items-center justify-center mb-1">
+                          <TrendingUp className="w-3 h-3 mr-1 text-purple-600" />
+                          <span className="font-semibold text-purple-900">
+                            {page.metrics.conversionRate.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">Rate</div>
                       </div>
                     </div>
                   )}
 
                   {/* URL */}
-                  <div className="text-xs text-muted-foreground truncate">
-                    {page.url}
+                  <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded-lg">
+                    <ExternalLink className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                    <span className="text-xs text-muted-foreground truncate">
+                      {generateLandingPageUrl(page.slug || page.id)}
+                    </span>
                   </div>
 
                   <div className="flex space-x-2">
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+                    <Button
+                      size="sm"
+                      variant="outline"
                       className="flex-1"
                       onClick={() => handlePreview(page)}
                     >
                       <Eye className="mr-1 h-3 w-3" />
                       Preview
                     </Button>
-                    <Button 
-                      size="sm" 
-                      className="flex-1"
+                    <Button
+                      size="sm"
+                      className="flex-1 btn-gradient"
                       onClick={() => handleEdit(page.id)}
                     >
                       <Edit className="mr-1 h-3 w-3" />
@@ -289,6 +369,23 @@ export default function LandingPages() {
           onOpenChange={(open) => !open && setPreviewPage(null)}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog({ open, page: null })}
+        title="Delete Landing Page"
+        description={
+          deleteDialog.page
+            ? `Are you sure you want to delete "${deleteDialog.page.name}"? This action cannot be undone and will permanently remove the landing page and all its content.`
+            : ''
+        }
+        confirmText="Delete Landing Page"
+        cancelText="Cancel"
+        variant="destructive"
+        onConfirm={handleDelete}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   )
 }

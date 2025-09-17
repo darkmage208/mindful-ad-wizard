@@ -4,26 +4,39 @@
 
 @layer base {
   :root {
+    /* Professional Blue-Gray Color Scheme */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 215 25% 15%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 215 25% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 84% 4.9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --popover-foreground: 215 25% 15%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 11% 96%;
+    --secondary-foreground: 215 25% 15%;
+    --muted: 215 16% 97%;
+    --muted-foreground: 215 16% 46%;
+    --accent: 214 32% 91%;
+    --accent-foreground: 215 25% 15%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
+    --radius: 0.75rem;
+
+    /* Professional Status Colors */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+
+    /* Gradient Variables */
+    --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%) 0%, hsl(221 83% 60%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(215 16% 97%) 0%, hsl(210 11% 96%) 100%);
   }
 
   .dark {
@@ -54,6 +67,116 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /* Professional Typography */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  h1 {
+    @apply text-3xl lg:text-4xl;
+  }
+
+  h2 {
+    @apply text-2xl lg:text-3xl;
+  }
+
+  h3 {
+    @apply text-xl lg:text-2xl;
+  }
+}
+
+@layer components {
+  /* Professional Card Styles */
+  .card-gradient {
+    background: var(--gradient-secondary);
+    @apply border-0 shadow-sm;
+  }
+
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-md hover:scale-[1.02];
+  }
+
+  /* Professional Button Styles */
+  .btn-gradient {
+    background: var(--gradient-primary);
+    @apply border-0 text-white shadow-md hover:shadow-lg transition-all duration-200;
+  }
+
+  /* Status Colors */
+  .status-success {
+    @apply bg-green-50 text-green-700 border-green-200;
+  }
+
+  .status-warning {
+    @apply bg-yellow-50 text-yellow-700 border-yellow-200;
+  }
+
+  .status-info {
+    @apply bg-blue-50 text-blue-700 border-blue-200;
+  }
+
+  .status-error {
+    @apply bg-red-50 text-red-700 border-red-200;
+  }
+
+  /* Professional Sidebar */
+  .sidebar-item {
+    @apply flex items-center px-4 py-3 text-sm font-medium rounded-lg mx-2 transition-all duration-200;
+  }
+
+  .sidebar-item-active {
+    @apply bg-primary text-primary-foreground shadow-md;
+  }
+
+  .sidebar-item-inactive {
+    @apply text-muted-foreground hover:bg-accent hover:text-accent-foreground;
+  }
+
+  /* Mobile Optimizations */
+  .mobile-friendly {
+    @apply min-h-[44px] min-w-[44px]; /* iOS/Android touch target size */
+  }
+
+  .mobile-scroll {
+    @apply overscroll-y-contain scroll-smooth;
+  }
+
+  /* Responsive Grid Utilities */
+  .grid-responsive {
+    @apply grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+
+  .grid-responsive-cards {
+    @apply grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+  }
+
+  /* Professional Focus States */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+
+  /* Responsive Typography */
+  @screen sm {
+    h1 { @apply text-4xl lg:text-5xl; }
+    h2 { @apply text-3xl lg:text-4xl; }
+    h3 { @apply text-2xl lg:text-3xl; }
+  }
+
+  /* Touch-friendly spacing on mobile */
+  @media (max-width: 640px) {
+    .touch-spacing > * + * {
+      @apply mt-4;
+    }
+
+    .touch-padding {
+      @apply p-4;
+    }
+
+    .touch-buttons .btn {
+      @apply py-3 px-6 text-base;
+    }
   }
 }

@@ -140,21 +140,25 @@ export default function AIChat() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="text-center">
-        <h1 className="text-3xl font-bold flex items-center justify-center space-x-2">
-          <Sparkles className="h-8 w-8 text-primary" />
-          <span>AI Marketing Assistant</span>
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Get intelligent insights and recommendations for your advertising campaigns
-        </p>
+      <div className="space-y-2 sm:space-y-3">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+            <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold">AI Marketing Assistant</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm">
+              Get intelligent insights and recommendations for your campaigns
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Suggestions */}
       {messages.length <= 1 && (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
           {suggestions.map((suggestion) => (
             <Card 
               key={suggestion.id} 
@@ -180,48 +184,48 @@ export default function AIChat() {
       )}
 
       {/* Chat Messages */}
-      <Card className="flex flex-col h-[600px] md:h-[700px]">
-        <CardHeader className="flex-shrink-0 pb-3">
-          <CardTitle className="flex items-center space-x-2">
-            <MessageCircle className="h-5 w-5" />
+      <Card className="flex flex-col h-[500px] sm:h-[600px] md:h-[700px]">
+        <CardHeader className="flex-shrink-0 pb-2 sm:pb-3">
+          <CardTitle className="flex items-center space-x-2 text-sm sm:text-base">
+            <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
             <span>Chat</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col min-h-0 p-4">
-          <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+        <CardContent className="flex-1 flex flex-col min-h-0 p-2 sm:p-4">
+          <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 mb-3 sm:mb-4 pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
             {messages.map((message) => (
               <div
                 key={message.id}
                 className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div className={`flex space-x-3 max-w-[85%] sm:max-w-[80%] md:max-w-[75%] ${
+                <div className={`flex space-x-2 sm:space-x-3 max-w-[90%] sm:max-w-[85%] md:max-w-[80%] lg:max-w-[75%] ${
                   message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
                 }`}>
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-1 ${
-                    message.type === 'user' 
-                      ? 'bg-primary text-white' 
+                  <div className={`flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center mt-1 ${
+                    message.type === 'user'
+                      ? 'bg-primary text-white'
                       : 'bg-gray-200 text-gray-600'
                   }`}>
                     {message.type === 'user' ? (
-                      <User className="h-4 w-4" />
+                      <User className="h-3 w-3 sm:h-4 sm:w-4" />
                     ) : (
-                      <Bot className="h-4 w-4" />
+                      <Bot className="h-3 w-3 sm:h-4 sm:w-4" />
                     )}
                   </div>
                   <div className={`flex flex-col ${
                     message.type === 'user' ? 'items-end' : 'items-start'
                   }`}>
-                    <div className={`px-4 py-3 rounded-2xl max-w-full break-words ${
+                    <div className={`px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-3 rounded-lg sm:rounded-2xl max-w-full break-words ${
                       message.type === 'user'
-                        ? 'bg-primary text-white rounded-br-md'
-                        : 'bg-gray-100 text-gray-900 rounded-bl-md'
+                        ? 'bg-primary text-white rounded-br-sm sm:rounded-br-md'
+                        : 'bg-gray-100 text-gray-900 rounded-bl-sm sm:rounded-bl-md'
                     }`}>
                       {message.type === 'user' ? (
-                        <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                        <div className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
                           {message.content}
                         </div>
                       ) : (
-                        <div className="text-sm leading-relaxed prose prose-sm prose-gray max-w-none dark:prose-invert">
+                        <div className="text-xs sm:text-sm leading-relaxed prose prose-xs sm:prose-sm prose-gray max-w-none dark:prose-invert">
                           <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
                             components={{

@@ -118,17 +118,17 @@ export default function LiveLandingPage() {
       {contact.whatsapp && (
         <button
           onClick={handleWhatsAppClick}
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg hover:scale-110 transition-all duration-300 flex items-center justify-center"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full shadow-lg hover:scale-110 transition-all duration-300 flex items-center justify-center"
           style={{ backgroundColor: '#25D366' }}
           aria-label="Contact us on WhatsApp"
         >
-          <MessageCircle className="w-8 h-8 text-white" />
+          <MessageCircle className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white" />
         </button>
       )}
 
       {/* Hero Section */}
       <section
-        className="relative py-12 sm:py-16 md:py-20 px-4 sm:px-6 text-center min-h-[500px] sm:min-h-[600px] lg:min-h-[700px] flex items-center"
+        className="relative py-8 sm:py-12 md:py-16 lg:py-20 px-3 sm:px-4 md:px-6 text-center min-h-[400px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[700px] flex items-center"
         style={{
           background: `linear-gradient(135deg, ${colors.primary}15, ${colors.accent}10)`,
         }}
@@ -156,19 +156,19 @@ export default function LiveLandingPage() {
           </div>
         )}
         
-        <div className="relative max-w-6xl mx-auto px-2 sm:px-0">
+        <div className="relative max-w-7xl mx-auto px-2 sm:px-4 md:px-6">
           <h1
-            className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-4 sm:mb-6 leading-tight"
+            className="text-xl sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-3 sm:mb-4 md:mb-6 leading-tight"
             style={{ color: colors.primary }}
           >
             {content.headline}
           </h1>
-          <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 mb-6 sm:mb-8 max-w-xs sm:max-w-2xl md:max-w-3xl mx-auto leading-relaxed px-2 sm:px-0">
+          <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 mb-4 sm:mb-6 md:mb-8 max-w-sm sm:max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto leading-relaxed">
             {content.subheadline}
           </p>
           <Button
             size="lg"
-            className="px-6 sm:px-8 md:px-12 py-3 md:py-4 text-base sm:text-lg md:text-xl font-semibold hover:scale-105 transition-transform w-full sm:w-auto max-w-xs sm:max-w-none mx-auto"
+            className="px-4 sm:px-6 md:px-8 lg:px-12 py-2 sm:py-3 md:py-4 text-sm sm:text-base md:text-lg lg:text-xl font-semibold hover:scale-105 transition-transform w-full sm:w-auto max-w-sm sm:max-w-md md:max-w-none mx-auto"
             style={{
               backgroundColor: colors.primary,
               borderColor: colors.primary,
@@ -181,9 +181,9 @@ export default function LiveLandingPage() {
       </section>
 
       {/* Description Section */}
-      <section className="py-12 sm:py-16 md:py-20 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto text-center">
-          <p className="text-base sm:text-lg md:text-xl text-gray-700 leading-relaxed max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto px-2 sm:px-0">
+      <section className="py-8 sm:py-12 md:py-16 lg:py-20 px-3 sm:px-4 md:px-6">
+        <div className="max-w-7xl mx-auto text-center">
+          <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-700 leading-relaxed max-w-sm sm:max-w-2xl md:max-w-3xl lg:max-w-5xl mx-auto">
             {content.description}
           </p>
         </div>
@@ -191,31 +191,31 @@ export default function LiveLandingPage() {
 
       {/* Features Section */}
       {content.features && content.features.length > 0 && (
-        <section className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 bg-gray-50">
+        <section className="py-8 sm:py-12 md:py-16 lg:py-20 px-3 sm:px-4 md:px-6 bg-gray-50">
           <div className="max-w-7xl mx-auto">
             <h2
-              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-8 sm:mb-12 md:mb-16"
+              className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-center mb-6 sm:mb-8 md:mb-12 lg:mb-16"
               style={{ color: colors.primary }}
             >
               Our Services
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
               {content.features.map((feature, index) => (
                 <div
                   key={index}
-                  className="bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow-sm border hover:shadow-lg transition-all duration-300 hover:transform hover:scale-105"
+                  className="bg-white p-3 sm:p-4 md:p-6 lg:p-8 rounded-lg sm:rounded-xl shadow-sm border hover:shadow-lg transition-all duration-300 hover:transform hover:scale-105"
                 >
                   <div
-                    className="w-16 h-16 rounded-full flex items-center justify-center mb-6"
+                    className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-3 sm:mb-4 md:mb-6"
                     style={{ backgroundColor: `${colors.accent}20` }}
                   >
                     <div
-                      className="w-8 h-8 rounded-full"
+                      className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full"
                       style={{ backgroundColor: colors.accent }}
                     />
                   </div>
-                  <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">{feature}</h3>
-                  <p className="text-sm sm:text-base text-gray-600">
+                  <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-2 sm:mb-3 md:mb-4">{feature}</h3>
+                  <p className="text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed">
                     Professional service tailored to your individual needs and goals.
                   </p>
                 </div>
@@ -227,9 +227,9 @@ export default function LiveLandingPage() {
 
       {/* Feature Image Section */}
       {images && images.find(img => img.type === 'feature') && (
-        <section className="py-12 sm:py-16 md:py-20 px-4 sm:px-6">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-center">
+        <section className="py-8 sm:py-12 md:py-16 lg:py-20 px-3 sm:px-4 md:px-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 md:gap-12 items-center">
               <div className="order-2 lg:order-1">
                 <img
                   src={images.find(img => img.type === 'feature')?.storedUrl || images.find(img => img.type === 'feature')?.url}
@@ -255,19 +255,19 @@ export default function LiveLandingPage() {
                   }}
                 />
               </div>
-              <div className="order-1 lg:order-2 text-center lg:text-left">
+              <div className="order-1 lg:order-2 text-center lg:text-left px-2 sm:px-4">
                 <h2
-                  className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6"
+                  className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4 md:mb-6"
                   style={{ color: colors.primary }}
                 >
                   Why Choose Us?
                 </h2>
-                <p className="text-base sm:text-lg text-gray-700 mb-4 sm:mb-6">
+                <p className="text-sm sm:text-base md:text-lg text-gray-700 mb-4 sm:mb-6 leading-relaxed">
                   We provide personalized, professional care designed to help you achieve your goals in a supportive environment.
                 </p>
                 <Button
                   size="lg"
-                  className="px-8 py-3"
+                  className="px-4 sm:px-6 md:px-8 py-2 sm:py-3 w-full sm:w-auto"
                   style={{
                     backgroundColor: colors.accent,
                     borderColor: colors.accent,
@@ -284,33 +284,33 @@ export default function LiveLandingPage() {
 
       {/* Testimonials Section */}
       {content.testimonials && content.testimonials.length > 0 && (
-        <section className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 bg-gray-50">
-          <div className="max-w-6xl mx-auto">
+        <section className="py-8 sm:py-12 md:py-16 lg:py-20 px-3 sm:px-4 md:px-6 bg-gray-50">
+          <div className="max-w-7xl mx-auto">
             <h2
-              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-8 sm:mb-12 md:mb-16"
+              className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-center mb-6 sm:mb-8 md:mb-12 lg:mb-16"
               style={{ color: colors.primary }}
             >
               What Our Clients Say
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
               {content.testimonials.map((testimonial, index) => (
                 <div
                   key={index}
-                  className="bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow-sm border"
+                  className="bg-white p-3 sm:p-4 md:p-6 lg:p-8 rounded-lg sm:rounded-xl shadow-sm border"
                 >
-                  <div className="flex items-center mb-6">
+                  <div className="flex items-center mb-3 sm:mb-4 md:mb-6">
                     {[...Array(testimonial.rating)].map((_, i) => (
                       <Star
                         key={i}
-                        className="w-5 h-5 fill-current"
+                        className="w-4 h-4 sm:w-5 sm:h-5 fill-current"
                         style={{ color: colors.accent }}
                       />
                     ))}
                   </div>
-                  <blockquote className="text-gray-700 mb-4 sm:mb-6 italic text-sm sm:text-base md:text-lg">
+                  <blockquote className="text-gray-700 mb-3 sm:mb-4 md:mb-6 italic text-xs sm:text-sm md:text-base lg:text-lg leading-relaxed">
                     "{testimonial.text}"
                   </blockquote>
-                  <cite className="text-sm sm:text-base font-semibold text-gray-900">
+                  <cite className="text-xs sm:text-sm md:text-base font-semibold text-gray-900">
                     — {testimonial.author}
                   </cite>
                 </div>
@@ -322,22 +322,22 @@ export default function LiveLandingPage() {
 
       {/* CTA Section */}
       <section
-        className="py-12 sm:py-16 md:py-20 px-4 sm:px-6"
+        className="py-8 sm:py-12 md:py-16 lg:py-20 px-3 sm:px-4 md:px-6"
         style={{
           background: `linear-gradient(135deg, ${colors.primary}, ${colors.accent})`,
         }}
       >
-        <div className="max-w-4xl mx-auto text-center text-white">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6">
+        <div className="max-w-5xl mx-auto text-center text-white">
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-3 sm:mb-4 md:mb-6">
             Ready to Get Started?
           </h2>
-          <p className="text-base sm:text-lg md:text-xl mb-6 sm:mb-8 opacity-90">
+          <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-4 sm:mb-6 md:mb-8 opacity-90 leading-relaxed max-w-2xl mx-auto">
             Take the first step towards positive change today.
           </p>
           <Button
             size="lg"
             variant="secondary"
-            className="px-6 sm:px-8 md:px-12 py-3 md:py-4 text-base sm:text-lg md:text-xl font-semibold bg-white hover:bg-gray-100 w-full sm:w-auto max-w-xs sm:max-w-none mx-auto"
+            className="px-4 sm:px-6 md:px-8 lg:px-12 py-2 sm:py-3 md:py-4 text-sm sm:text-base md:text-lg lg:text-xl font-semibold bg-white hover:bg-gray-100 w-full sm:w-auto max-w-sm sm:max-w-md md:max-w-none mx-auto"
             style={{ color: colors.primary }}
             onClick={handleCTAClick}
           >
@@ -347,17 +347,17 @@ export default function LiveLandingPage() {
       </section>
 
       {/* Contact Section */}
-      <section id="contact-section" className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 bg-gray-900 text-white">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-8 sm:mb-12 md:mb-16">Get In Touch</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-12 mb-12 sm:mb-16">
+      <section id="contact-section" className="py-8 sm:py-12 md:py-16 lg:py-20 px-3 sm:px-4 md:px-6 bg-gray-900 text-white">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-center mb-6 sm:mb-8 md:mb-12 lg:mb-16">Get In Touch</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8 lg:gap-12 mb-8 sm:mb-12 md:mb-16">
             {contact.whatsapp && (
-              <div className="text-center">
-                <MessageCircle className="w-8 sm:w-10 md:w-12 h-8 sm:h-10 md:h-12 mx-auto mb-4 sm:mb-6" style={{ color: '#25D366' }} />
-                <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">WhatsApp Us</h3>
-                <p className="text-gray-300 text-base sm:text-lg">{contact.whatsapp}</p>
+              <div className="text-center p-3 sm:p-4">
+                <MessageCircle className="w-6 sm:w-8 md:w-10 lg:w-12 h-6 sm:h-8 md:h-10 lg:h-12 mx-auto mb-3 sm:mb-4 md:mb-6" style={{ color: '#25D366' }} />
+                <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-2 sm:mb-3 md:mb-4">WhatsApp Us</h3>
+                <p className="text-gray-300 text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4">{contact.whatsapp}</p>
                 <Button
-                  className="mt-4 text-white hover:scale-105 transition-transform"
+                  className="mt-2 sm:mt-4 text-white hover:scale-105 transition-transform w-full sm:w-auto text-xs sm:text-sm md:text-base"
                   style={{ backgroundColor: '#25D366', borderColor: '#25D366' }}
                   onClick={handleWhatsAppClick}
                 >
@@ -367,43 +367,43 @@ export default function LiveLandingPage() {
             )}
 
             {contact.phone && (
-              <div className="text-center">
-                <Phone className="w-8 sm:w-10 md:w-12 h-8 sm:h-10 md:h-12 mx-auto mb-4 sm:mb-6" style={{ color: colors.accent }} />
-                <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Call Us</h3>
-                <p className="text-gray-300 text-base sm:text-lg">{contact.phone}</p>
+              <div className="text-center p-3 sm:p-4">
+                <Phone className="w-6 sm:w-8 md:w-10 lg:w-12 h-6 sm:h-8 md:h-10 lg:h-12 mx-auto mb-3 sm:mb-4 md:mb-6" style={{ color: colors.accent }} />
+                <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-2 sm:mb-3 md:mb-4">Call Us</h3>
+                <p className="text-gray-300 text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4">{contact.phone}</p>
                 <Button
                   variant="outline"
-                  className="mt-4 border-white text-white hover:bg-white hover:text-gray-900"
+                  className="mt-2 sm:mt-4 border-white text-white hover:bg-white hover:text-gray-900 w-full sm:w-auto text-xs sm:text-sm md:text-base"
                   onClick={() => window.location.href = `tel:${contact.phone}`}
                 >
                   Call Now
                 </Button>
               </div>
             )}
-            
+
             {contact.email && (
-              <div className="text-center">
-                <Mail className="w-12 h-12 mx-auto mb-6" style={{ color: colors.accent }} />
-                <h3 className="text-xl font-semibold mb-4">Email Us</h3>
-                <p className="text-gray-300 text-lg">{contact.email}</p>
+              <div className="text-center p-3 sm:p-4">
+                <Mail className="w-6 sm:w-8 md:w-10 lg:w-12 h-6 sm:h-8 md:h-10 lg:h-12 mx-auto mb-3 sm:mb-4 md:mb-6" style={{ color: colors.accent }} />
+                <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-2 sm:mb-3 md:mb-4">Email Us</h3>
+                <p className="text-gray-300 text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4 break-words">{contact.email}</p>
                 <Button
                   variant="outline"
-                  className="mt-4 border-white text-white hover:bg-white hover:text-gray-900"
+                  className="mt-2 sm:mt-4 border-white text-white hover:bg-white hover:text-gray-900 w-full sm:w-auto text-xs sm:text-sm md:text-base"
                   onClick={() => window.location.href = `mailto:${contact.email}`}
                 >
                   Send Email
                 </Button>
               </div>
             )}
-            
+
             {contact.address && (
-              <div className="text-center">
-                <MapPin className="w-12 h-12 mx-auto mb-6" style={{ color: colors.accent }} />
-                <h3 className="text-xl font-semibold mb-4">Visit Us</h3>
-                <p className="text-gray-300 text-lg">{contact.address}</p>
+              <div className="text-center p-3 sm:p-4">
+                <MapPin className="w-6 sm:w-8 md:w-10 lg:w-12 h-6 sm:h-8 md:h-10 lg:h-12 mx-auto mb-3 sm:mb-4 md:mb-6" style={{ color: colors.accent }} />
+                <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-2 sm:mb-3 md:mb-4">Visit Us</h3>
+                <p className="text-gray-300 text-xs sm:text-sm md:text-base lg:text-lg mb-3 sm:mb-4 leading-relaxed">{contact.address}</p>
                 <Button
                   variant="outline"
-                  className="mt-4 border-white text-white hover:bg-white hover:text-gray-900"
+                  className="mt-2 sm:mt-4 border-white text-white hover:bg-white hover:text-gray-900 w-full sm:w-auto text-xs sm:text-sm md:text-base"
                   onClick={() => window.open(`https://maps.google.com?q=${encodeURIComponent(contact.address)}`)}
                 >
                   Get Directions
@@ -413,10 +413,10 @@ export default function LiveLandingPage() {
           </div>
 
           {contact.hours && (
-            <div className="text-center border-t border-gray-700 pt-12">
-              <div className="flex items-center justify-center space-x-3 text-gray-300">
-                <Clock className="w-6 h-6" />
-                <span className="text-lg">{contact.hours}</span>
+            <div className="text-center border-t border-gray-700 pt-6 sm:pt-8 md:pt-12">
+              <div className="flex items-center justify-center space-x-2 sm:space-x-3 text-gray-300">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                <span className="text-sm sm:text-base md:text-lg">{contact.hours}</span>
               </div>
             </div>
           )}
@@ -424,12 +424,12 @@ export default function LiveLandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 bg-gray-100">
-        <div className="max-w-4xl mx-auto text-center text-gray-600">
-          <p className="text-sm">
+      <footer className="py-6 sm:py-8 md:py-12 px-3 sm:px-4 md:px-6 bg-gray-100">
+        <div className="max-w-5xl mx-auto text-center text-gray-600">
+          <p className="text-xs sm:text-sm md:text-base">
             © 2024 {landingPage.name}. All rights reserved.
           </p>
-          <p className="text-xs mt-2 opacity-75">
+          <p className="text-xs sm:text-sm mt-1 sm:mt-2 opacity-75">
             Powered by Mindful Ad Wizard
           </p>
         </div>

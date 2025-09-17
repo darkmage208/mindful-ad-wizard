@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import { campaignsAPI } from '@/lib/api'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { Campaign } from '@/types'
@@ -48,6 +49,11 @@ export default function Campaigns() {
   })
 
   const [filter, setFilter] = useState<'all' | 'active' | 'paused' | 'draft'>('all')
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; campaign: Campaign | null }>({
+    open: false,
+    campaign: null,
+  })
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const filteredCampaigns = campaigns.filter(campaign => {
     if (filter === 'all') return true
@@ -63,14 +69,22 @@ export default function Campaigns() {
     }
   }
 
-  const handleDelete = async (campaignId: string) => {
-    if (confirm('Are you sure you want to delete this campaign?')) {
-      try {
-        await campaignsAPI.delete(campaignId)
-        refetch()
-      } catch (error) {
-        console.error('Failed to delete campaign:', error)
-      }
+  const handleDeleteClick = (campaign: Campaign) => {
+    setDeleteDialog({ open: true, campaign })
+  }
+
+  const handleDelete = async () => {
+    if (!deleteDialog.campaign) return
+
+    setIsDeleting(true)
+    try {
+      await campaignsAPI.delete(deleteDialog.campaign.id)
+      refetch()
+      setDeleteDialog({ open: false, campaign: null })
+    } catch (error) {
+      console.error('Failed to delete campaign:', error)
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -80,7 +94,7 @@ export default function Campaigns() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Campaigns</h1>
         </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 grid-cols-1">
           {Array.from({ length: 6 }).map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardHeader>
@@ -103,15 +117,22 @@ export default function Campaigns() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Campaigns</h1>
-          <p className="text-muted-foreground">
-            Manage your advertising campaigns across Meta and Google platforms.
-          </p>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+              <Target className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">Campaigns</h1>
+              <p className="text-muted-foreground">
+                Manage your advertising campaigns across Meta and Google platforms
+              </p>
+            </div>
+          </div>
         </div>
         <Link to="/campaigns/new">
-          <Button>
+          <Button className="btn-gradient mobile-friendly">
             <Plus className="mr-2 h-4 w-4" />
             New Campaign
           </Button>
@@ -119,7 +140,7 @@ export default function Campaigns() {
       </div>
 
       {/* Filters */}
-      <div className="flex space-x-2">
+      <div className="flex flex-wrap gap-2">
         {(['all', 'active', 'paused', 'draft'] as const).map((status) => (
           <Button
             key={status}
@@ -160,28 +181,38 @@ export default function Campaigns() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 grid-cols-1">
           {filteredCampaigns.map((campaign) => (
-            <Card key={campaign.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
+            <Card key={campaign.id} className="hover:shadow-lg transition-all duration-300 border-0 shadow-md bg-gradient-to-br from-white to-gray-50/50">
+              <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-lg">
-                      {platformIcons[campaign.platform]}
-                    </span>
-                    <div>
-                      <CardTitle className="text-lg leading-tight">
+                  <div className="flex items-start space-x-3 flex-1 min-w-0">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm bg-gradient-to-br from-primary/10 to-primary/5 flex-shrink-0">
+                      <span className="text-2xl">
+                        {platformIcons[campaign.platform]}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-lg sm:text-xl font-bold leading-tight text-gray-900 mb-1 truncate">
                         {campaign.name}
                       </CardTitle>
-                      <CardDescription className="text-sm">
-                        {campaign.platform === 'both' ? 'Meta & Google Ads' : 
-                         campaign.platform === 'meta' ? 'Meta Ads' : 'Google Ads'}
-                      </CardDescription>
+                      <div className="flex items-center space-x-2">
+                        <CardDescription className="text-sm text-gray-600">
+                          {campaign.platform === 'both' ? 'Meta & Google Ads' :
+                           campaign.platform === 'meta' ? 'Meta Ads' : 'Google Ads'}
+                        </CardDescription>
+                        <Badge
+                          variant="outline"
+                          className={`${statusColors[campaign.status?.toLowerCase() || 'draft']} text-xs`}
+                        >
+                          {campaign.status?.toLowerCase() || 'draft'}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -199,23 +230,23 @@ export default function Campaigns() {
                         </Link>
                       </DropdownMenuItem>
                       {campaign.status?.toLowerCase() === 'active' ? (
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           onClick={() => handleStatusChange(campaign.id, 'paused')}
                         >
                           <Pause className="mr-2 h-4 w-4" />
                           Pause
                         </DropdownMenuItem>
                       ) : (
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           onClick={() => handleStatusChange(campaign.id, 'active')}
                         >
                           <Play className="mr-2 h-4 w-4" />
                           Activate
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         className="text-red-600"
-                        onClick={() => handleDelete(campaign.id)}
+                        onClick={() => handleDeleteClick(campaign)}
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete
@@ -224,70 +255,80 @@ export default function Campaigns() {
                   </DropdownMenu>
                 </div>
               </CardHeader>
-              
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Badge 
-                      variant="outline" 
-                      className={statusColors[campaign.status?.toLowerCase() || 'draft']}
-                    >
-                      {campaign.status?.toLowerCase() || 'draft'}
-                    </Badge>
-                    <span className="text-sm text-muted-foreground">
-                      {formatDate(campaign.createdAt)}
-                    </span>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center space-x-1">
-                      <DollarSign className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-muted-foreground">Budget:</span>
-                      <span className="font-medium">{formatCurrency(campaign.budget)}</span>
+              <CardContent className="pt-0">
+                <div className="space-y-4">
+                  {/* Key metrics row */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <DollarSign className="h-4 w-4 text-blue-600" />
+                        <span className="text-blue-900 font-medium">Budget</span>
+                      </div>
+                      <span className="font-bold text-blue-900">{formatCurrency(campaign.budget)}</span>
                     </div>
-                    <div className="flex items-center space-x-1">
-                      <Target className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-muted-foreground">Audience:</span>
-                      <span className="font-medium truncate">
+                    <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <Target className="h-4 w-4 text-purple-600" />
+                        <span className="text-purple-900 font-medium">Audience</span>
+                      </div>
+                      <span className="font-bold text-purple-900 truncate max-w-[120px]">
                         {campaign.targetAudience.split(' ').slice(0, 2).join(' ')}...
                       </span>
                     </div>
                   </div>
 
+                  {/* Performance metrics */}
                   {campaign.metrics && (
-                    <div className="grid grid-cols-3 gap-2 pt-2 border-t text-xs">
-                      <div className="text-center">
-                        <div className="font-medium">
-                          {campaign.metrics.impressions.toLocaleString()}
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                        <TrendingUp className="h-4 w-4 mr-2" />
+                        Performance Overview
+                      </h4>
+                      <div className="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                          <div className="text-lg font-bold text-gray-900">
+                            {campaign.metrics.impressions.toLocaleString()}
+                          </div>
+                          <div className="text-xs text-gray-600">Impressions</div>
                         </div>
-                        <div className="text-muted-foreground">Impressions</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-medium">
-                          {campaign.metrics.clicks.toLocaleString()}
+                        <div>
+                          <div className="text-lg font-bold text-gray-900">
+                            {campaign.metrics.clicks.toLocaleString()}
+                          </div>
+                          <div className="text-xs text-gray-600">Clicks</div>
                         </div>
-                        <div className="text-muted-foreground">Clicks</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-medium">
-                          {campaign.metrics.leads}
+                        <div>
+                          <div className="text-lg font-bold text-gray-900">
+                            {campaign.metrics.leads}
+                          </div>
+                          <div className="text-xs text-gray-600">Leads</div>
                         </div>
-                        <div className="text-muted-foreground">Leads</div>
                       </div>
                     </div>
                   )}
 
+                  {/* Campaign details */}
+                  <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t">
+                    <span>Created {formatDate(campaign.createdAt)}</span>
+                    <div className="flex items-center space-x-1">
+                      <Calendar className="h-3 w-3" />
+                      <span>Last updated 2h ago</span>
+                    </div>
+                  </div>
+
+                  {/* Action buttons */}
                   <div className="flex space-x-2 pt-2">
-                    <Button asChild size="sm" variant="outline" className="flex-1">
+                    <Button asChild size="sm" variant="outline" className="flex-1 text-xs">
                       <Link to={`/campaigns/${campaign.id}`}>
                         <Eye className="mr-1 h-3 w-3" />
-                        View
+                        View Details
                       </Link>
                     </Button>
-                    <Button asChild size="sm" className="flex-1">
+                    <Button asChild size="sm" className="flex-1 text-xs btn-gradient">
                       <Link to={`/campaigns/${campaign.id}/edit`}>
                         <Edit className="mr-1 h-3 w-3" />
-                        Edit
+                        Edit Campaign
                       </Link>
                     </Button>
                   </div>
@@ -297,6 +338,23 @@ export default function Campaigns() {
           ))}
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog({ open, campaign: null })}
+        title="Delete Campaign"
+        description={
+          deleteDialog.campaign
+            ? `Are you sure you want to delete "${deleteDialog.campaign.name}"? This action cannot be undone and will permanently remove all campaign data, including metrics and performance history.`
+            : ''
+        }
+        confirmText="Delete Campaign"
+        cancelText="Cancel"
+        variant="destructive"
+        onConfirm={handleDelete}
+        isLoading={isDeleting}
+      />
     </div>
   )
 }

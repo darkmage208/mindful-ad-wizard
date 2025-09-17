@@ -12,6 +12,12 @@ export function formatCurrency(amount: number): string {
   }).format(amount)
 }
 
+export function generateLandingPageUrl(slug: string): string {
+  // Get the current domain or use environment variable
+  const baseUrl = window.location.origin || import.meta.env.VITE_APP_URL || 'http://localhost:3000'
+  return `${baseUrl}/lp/${slug}`
+}
+
 export function formatDate(date: Date | string): string {
   // Handle both Date objects and date strings
   const dateObj = typeof date === 'string' ? new Date(date) : date

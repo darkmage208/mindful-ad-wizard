@@ -15,25 +15,21 @@ import {
 export const createLandingPage = asyncControllerHandler(async (req, res) => {
   const { name, template, colors, content, contact } = req.body;
   const userId = req.user.id;
-  
-  // Generate unique URL slug
+
+  // Generate unique slug (store only the slug, not the full URL)
   const slug = generateLandingPageSlug(name);
-  const url = `${process.env.FRONTEND_URL}/lp/${slug}`;
-  
-  // Check if URL already exists
+
+  // Check if slug already exists
   const existingPage = await prisma.landingPage.findUnique({
-    where: { url },
+    where: { slug },
   });
-  
+
+  let finalSlug = slug;
   if (existingPage) {
-    const uniqueSlug = `${slug}-${Date.now()}`;
-    const uniqueUrl = `${process.env.FRONTEND_URL}/lp/${uniqueSlug}`;
-    
-    const landingPage = await createPage(userId, name, template, uniqueUrl, colors, content, contact);
-    return sendResponse(res, landingPage, 'Landing page created successfully');
+    finalSlug = `${slug}-${Date.now()}`;
   }
-  
-  const landingPage = await createPage(userId, name, template, url, colors, content, contact);
+
+  const landingPage = await createPage(userId, name, template, finalSlug, colors, content, contact);
   sendResponse(res, landingPage, 'Landing page created successfully');
 });
 
@@ -269,19 +265,17 @@ export const generateLandingPageWithAI = asyncControllerHandler(async (req, res)
       }
     }
 
-    // Generate unique URL slug
+    // Generate unique slug
     const slug = generateLandingPageSlug(`${businessName} ${businessType}`);
-    const url = `${process.env.FRONTEND_URL}/lp/${slug}`;
 
-    // Check if URL already exists
+    // Check if slug already exists
     const existingPage = await prisma.landingPage.findUnique({
-      where: { url },
+      where: { slug },
     });
 
-    let finalUrl = url;
+    let finalSlug = slug;
     if (existingPage) {
-      const uniqueSlug = `${slug}-${Date.now()}`;
-      finalUrl = `${process.env.FRONTEND_URL}/lp/${uniqueSlug}`;
+      finalSlug = `${slug}-${Date.now()}`;
     }
 
     // Create the landing page
@@ -289,7 +283,7 @@ export const generateLandingPageWithAI = asyncControllerHandler(async (req, res)
       data: {
         userId,
         name: `${businessName} - ${businessType} Landing Page`,
-        url: finalUrl,
+        slug: finalSlug,
         template,
         colors: getTemplateColors(template),
         content: {
@@ -354,12 +348,12 @@ export const generateLandingPageWithAI = asyncControllerHandler(async (req, res)
 });
 
 // Helper functions
-const createPage = async (userId, name, template, url, colors, content, contact) => {
+const createPage = async (userId, name, template, slug, colors, content, contact) => {
   return prisma.landingPage.create({
     data: {
       userId,
       name,
-      url,
+      slug,
       template,
       colors: colors || {
         primary: '#2563eb',
@@ -431,12 +425,9 @@ const getTemplateColors = (template) => {
 export const getPublicLandingPage = asyncControllerHandler(async (req, res) => {
   const { slug } = req.params;
 
-  // Extract slug from URL path
-  const url = `${process.env.FRONTEND_URL}/lp/${slug}`;
-
   const landingPage = await prisma.landingPage.findFirst({
     where: {
-      url,
+      slug,
       isActive: true
     },
   });

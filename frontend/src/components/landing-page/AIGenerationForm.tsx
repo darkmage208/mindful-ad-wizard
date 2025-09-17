@@ -194,25 +194,29 @@ export default function AIGenerationForm({ trigger }: AIGenerationFormProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <Wand2 className="h-5 w-5 text-primary" />
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto mobile-scroll">
+        <DialogHeader className="text-left">
+          <DialogTitle className="flex items-center space-x-3 text-lg sm:text-xl">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center">
+              <Wand2 className="h-5 w-5 text-white" />
+            </div>
             <span>Generate Landing Page with AI</span>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-muted-foreground leading-relaxed">
             Let AI create a professional landing page with custom content and images tailored to your business.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 touch-spacing">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Business Information */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium flex items-center">
-                <Building2 className="mr-2 h-4 w-4" />
-                Business Information
-              </h3>
+              <div className="flex items-center space-x-3 pb-2 border-b">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Building2 className="h-4 w-4 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold">Business Information</h3>
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="businessName">Business Name</Label>
@@ -280,10 +284,12 @@ export default function AIGenerationForm({ trigger }: AIGenerationFormProps) {
 
             {/* Services and Customization */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium flex items-center">
-                <Target className="mr-2 h-4 w-4" />
-                Services & Customization
-              </h3>
+              <div className="flex items-center space-x-3 pb-2 border-b">
+                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                  <Target className="h-4 w-4 text-green-600" />
+                </div>
+                <h3 className="text-lg font-semibold">Services & Customization</h3>
+              </div>
 
               <div className="space-y-2">
                 <Label>Services You Offer</Label>
@@ -382,18 +388,20 @@ export default function AIGenerationForm({ trigger }: AIGenerationFormProps) {
             </div>
           </div>
 
-          <div className="flex justify-end space-x-2 pt-4 border-t">
-            <Button 
-              type="button" 
-              variant="outline" 
+          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-6 border-t">
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => setOpen(false)}
               disabled={generateMutation.isPending}
+              className="mobile-friendly order-2 sm:order-1"
             >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={generateMutation.isPending || currentServices.length === 0}
+              className="mobile-friendly btn-gradient order-1 sm:order-2"
             >
               {generateMutation.isPending ? (
                 <>
