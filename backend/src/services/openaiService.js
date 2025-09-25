@@ -228,6 +228,21 @@ ${baseContext}
 Return only the descriptions, one per line, without numbers or bullets.
       `;
 
+    case 'cta':
+      return `
+Create 10 compelling call-to-action phrases for psychology practice advertising. Each CTA should:
+- Be 10-25 characters for button/ad use
+- Create urgency or emotional appeal
+- Be appropriate for mental health marketing
+- Encourage immediate action
+- Use action verbs
+- Avoid medical promises
+
+${baseContext}
+
+Return only the CTA phrases, one per line, without quotes or numbers.
+      `;
+
     case 'keywords':
     case 'ad-copy':
       return `
@@ -568,6 +583,259 @@ const extractContentFromText = (text) => {
     seoTitle: 'Professional Services - Expert Care You Can Trust',
     seoDescription: 'Get professional, compassionate care from experienced experts. Schedule your consultation today.',
     keywords: 'professional services, expert care, consultation, professional help'
+  };
+};
+
+/**
+ * Generate automatic audience segmentation
+ * @param {Object} onboardingData - User onboarding information
+ * @returns {Promise<Object>} Segmentation suggestions
+ */
+export const generateAudienceSegmentation = async (onboardingData) => {
+  if (!openai) {
+    throw new Error('OpenAI service not configured');
+  }
+
+  try {
+    const prompt = `
+Based on the following business information, create 3-4 specific audience segments for targeted advertising:
+
+Business Details:
+- Service Type: ${onboardingData.serviceType}
+- City/Location: ${onboardingData.city}
+- Target Audience: ${onboardingData.targetAudience}
+- Average Transaction Value: $${onboardingData.averageTicket}
+- Business Goals: ${onboardingData.businessGoals.join(', ')}
+- Monthly Budget: $${onboardingData.budget}
+- Experience Level: ${onboardingData.experience}
+
+For each segment, provide:
+- Name (e.g., "Anxious Young Professionals")
+- Demographics (age, gender, location, income)
+- Psychographics (interests, behaviors, pain points)
+- Messaging angle
+- Recommended platforms (Meta, Google, etc.)
+- Suggested budget allocation percentage
+
+Return in JSON format:
+{
+  "segments": [
+    {
+      "name": "Segment Name",
+      "demographics": {
+        "age": "25-35",
+        "gender": "All",
+        "location": "City name + 25 miles",
+        "income": "$50,000-$100,000"
+      },
+      "psychographics": {
+        "interests": ["interest1", "interest2"],
+        "behaviors": ["behavior1", "behavior2"],
+        "painPoints": ["pain1", "pain2"]
+      },
+      "messagingAngle": "Primary messaging approach",
+      "platforms": ["META", "GOOGLE"],
+      "budgetAllocation": 40
+    }
+  ]
+}
+`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert digital marketing strategist specializing in audience segmentation for professional services. Create precise, actionable audience segments.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      max_tokens: 2000,
+      temperature: 0.7,
+    });
+
+    const segmentationData = response.choices[0]?.message?.content;
+
+    if (!segmentationData) {
+      throw new Error('No segmentation data generated');
+    }
+
+    // Parse JSON response
+    let parsedSegmentation;
+    try {
+      parsedSegmentation = JSON.parse(segmentationData);
+    } catch (parseError) {
+      logger.warn('Segmentation JSON parsing failed, using fallback');
+      parsedSegmentation = generateFallbackSegmentation(onboardingData);
+    }
+
+    logger.info('AI audience segmentation generated', {
+      serviceType: onboardingData.serviceType,
+      segmentCount: parsedSegmentation.segments.length,
+    });
+
+    return parsedSegmentation;
+  } catch (error) {
+    logger.error('Audience segmentation generation failed:', error);
+    return generateFallbackSegmentation(onboardingData);
+  }
+};
+
+/**
+ * Generate comprehensive campaign strategy with AI
+ * @param {Object} campaign - Campaign data
+ * @param {Object} segments - Audience segments
+ * @returns {Promise<Object>} Campaign strategy
+ */
+export const generateCampaignStrategy = async (campaign, segments) => {
+  if (!openai) {
+    throw new Error('OpenAI service not configured');
+  }
+
+  try {
+    const prompt = `
+Create a comprehensive campaign strategy for this ${campaign.platform} campaign:
+
+Campaign: ${campaign.name}
+Budget: $${campaign.budget}
+Objectives: ${campaign.objectives.join(', ')}
+Target Audience: ${campaign.targetAudience}
+
+Audience Segments:
+${segments.segments.map((seg, i) => `${i + 1}. ${seg.name}: ${seg.messagingAngle}`).join('\n')}
+
+Provide:
+1. Campaign structure (ad groups/ad sets)
+2. Bidding strategy recommendations
+3. Geographic targeting suggestions
+4. Scheduling recommendations
+5. Success metrics and KPIs to track
+6. A/B testing suggestions
+7. Scaling recommendations
+
+Return in JSON format:
+{
+  "structure": {
+    "adGroups": [
+      {
+        "name": "Ad Group Name",
+        "targetSegment": "Segment name",
+        "keywords": ["keyword1", "keyword2"],
+        "budgetAllocation": 40
+      }
+    ]
+  },
+  "biddingStrategy": "Strategy recommendation",
+  "targeting": {
+    "geographic": ["location1", "location2"],
+    "demographics": "demographic targeting",
+    "interests": ["interest1", "interest2"]
+  },
+  "schedule": {
+    "days": ["Monday", "Tuesday"],
+    "hours": "9 AM - 9 PM",
+    "timezone": "Local"
+  },
+  "metrics": {
+    "primary": ["Cost Per Lead", "Conversion Rate"],
+    "secondary": ["CTR", "CPC", "Quality Score"]
+  },
+  "abTests": [
+    {
+      "element": "Headlines",
+      "variations": ["Variation 1", "Variation 2"],
+      "duration": "14 days"
+    }
+  ]
+}
+`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a senior digital advertising strategist with expertise in both Meta Ads and Google Ads. Create detailed, actionable campaign strategies.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      max_tokens: 2500,
+      temperature: 0.6,
+    });
+
+    const strategyData = response.choices[0]?.message?.content;
+
+    if (!strategyData) {
+      throw new Error('No strategy data generated');
+    }
+
+    let parsedStrategy;
+    try {
+      parsedStrategy = JSON.parse(strategyData);
+    } catch (parseError) {
+      logger.warn('Strategy JSON parsing failed');
+      throw new Error('Failed to parse campaign strategy');
+    }
+
+    logger.info('AI campaign strategy generated', {
+      campaignId: campaign.id,
+      platform: campaign.platform,
+    });
+
+    return parsedStrategy;
+  } catch (error) {
+    logger.error('Campaign strategy generation failed:', error);
+    throw new Error(`Campaign strategy generation failed: ${error.message}`);
+  }
+};
+
+/**
+ * Generate fallback segmentation if AI fails
+ */
+const generateFallbackSegmentation = (onboardingData) => {
+  return {
+    segments: [
+      {
+        name: "Primary Prospects",
+        demographics: {
+          age: "25-45",
+          gender: "All",
+          location: `${onboardingData.city} + 25 miles`,
+          income: "$40,000+"
+        },
+        psychographics: {
+          interests: ["mental health", "wellness", "self-improvement"],
+          behaviors: ["health conscious", "values professional help"],
+          painPoints: ["stress", "anxiety", "life transitions"]
+        },
+        messagingAngle: "Professional, compassionate care when you need it most",
+        platforms: ["META", "GOOGLE"],
+        budgetAllocation: 60
+      },
+      {
+        name: "Referral Sources",
+        demographics: {
+          age: "30-55",
+          gender: "All",
+          location: `${onboardingData.city} + 15 miles`,
+          income: "$50,000+"
+        },
+        psychographics: {
+          interests: ["healthcare", "family wellness"],
+          behaviors: ["influences others", "community oriented"],
+          painPoints: ["finding quality care", "trusted professionals"]
+        },
+        messagingAngle: "Trusted by professionals, proven results",
+        platforms: ["GOOGLE"],
+        budgetAllocation: 40
+      }
+    ]
   };
 };
 

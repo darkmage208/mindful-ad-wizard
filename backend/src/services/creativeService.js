@@ -1,5 +1,5 @@
 import { prisma } from '../utils/database.js';
-import { generateAIContent } from './openaiService.js';
+import { generateAIContent, generateAudienceSegmentation, generateCampaignStrategy } from './openaiService.js';
 import { generateLandingPageImages } from './openaiService.js';
 import { logger } from '../utils/logger.js';
 

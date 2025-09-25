@@ -21,7 +21,9 @@ import {
   Image,
   Video,
   Palette,
-  Loader2
+  Loader2,
+  Play,
+  Pause
 } from 'lucide-react'
 
 interface Creative {

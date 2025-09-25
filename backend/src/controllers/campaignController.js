@@ -1,6 +1,6 @@
 import { prisma } from '../utils/database.js';
 import { logger } from '../utils/logger.js';
-import { generateAIContent } from '../services/openaiService.js';
+import { generateAIContent, generateAudienceSegmentation, generateCampaignStrategy } from '../services/openaiService.js';
 import { generateCampaignCreatives } from '../services/creativeService.js';
 import { createMetaCampaign, updateMetaCampaign, pauseMetaCampaign } from '../services/metaAdsService.js';
 import { createGoogleCampaign, updateGoogleCampaign, pauseGoogleCampaign } from '../services/googleAdsService.js';
@@ -598,4 +598,122 @@ export const getCampaignLeads = async (req, res) => {
       },
     },
   });
+};
+
+/**
+ * Generate comprehensive AI-powered campaign with segmentation, creatives, and strategy
+ */
+export const generateAICampaign = async (req, res) => {
+  const { campaignId } = req.params;
+  const userId = req.user.id;
+  const {
+    includeImages = true,
+    creativesCount = 3,
+    imageStyle = 'professional medical photography',
+    autoSegment = true,
+    generateStrategy = true
+  } = req.body;
+
+  // Get campaign with user ownership check
+  const campaign = await prisma.campaign.findFirst({
+    where: {
+      id: campaignId,
+      userId,
+    },
+  });
+
+  if (!campaign) {
+    throw new NotFoundError('Campaign');
+  }
+
+  try {
+    const result = {
+      campaignId,
+      segments: null,
+      strategy: null,
+      creatives: [],
+      success: true,
+      messages: []
+    };
+
+    // Get user's onboarding data for context
+    const onboardingData = await prisma.onboardingData.findUnique({
+      where: { userId }
+    });
+
+    if (!onboardingData) {
+      result.messages.push('No onboarding data found - using basic targeting');
+    }
+
+    // 1. Generate audience segmentation if requested
+    if (autoSegment && onboardingData) {
+      try {
+        result.segments = await generateAudienceSegmentation(onboardingData);
+        result.messages.push(`Generated ${result.segments.segments.length} audience segments`);
+        logger.info(`AI segmentation generated for campaign ${campaignId}`);
+      } catch (segmentError) {
+        logger.warn('Segmentation generation failed:', segmentError);
+        result.messages.push('Segmentation generation failed - using default targeting');
+      }
+    }
+
+    // 2. Generate campaign strategy if requested
+    if (generateStrategy) {
+      try {
+        const segments = result.segments || { segments: [] };
+        result.strategy = await generateCampaignStrategy(campaign, segments);
+        result.messages.push('Campaign strategy generated successfully');
+        logger.info(`AI strategy generated for campaign ${campaignId}`);
+      } catch (strategyError) {
+        logger.warn('Strategy generation failed:', strategyError);
+        result.messages.push('Strategy generation failed - using basic recommendations');
+      }
+    }
+
+    // 3. Generate AI creatives
+    try {
+      const creativesResult = await generateCampaignCreatives(campaign, {
+        includeImages,
+        creativesCount,
+        imageStyle,
+        includeVideo: false
+      });
+
+      if (creativesResult.success) {
+        result.creatives = creativesResult.creatives;
+        result.messages.push(`Generated ${creativesResult.count} AI creatives with ${creativesResult.creatives.filter(c => c.imageUrl).length} images`);
+      } else {
+        result.messages.push('Creative generation partially failed');
+      }
+    } catch (creativeError) {
+      logger.error('Creative generation failed:', creativeError);
+      result.messages.push('Creative generation failed');
+      result.success = false;
+    }
+
+    // 4. Update campaign with AI metadata
+    if (result.segments || result.strategy) {
+      await prisma.campaign.update({
+        where: { id: campaignId },
+        data: {
+          aiGenerated: true,
+          aiSegments: result.segments ? JSON.stringify(result.segments) : null,
+          aiStrategy: result.strategy ? JSON.stringify(result.strategy) : null,
+          updatedAt: new Date(),
+        }
+      });
+    }
+
+    logger.info(`Comprehensive AI campaign generation completed for ${campaignId}`);
+
+    res.json({
+      success: result.success,
+      message: 'AI campaign generation completed',
+      data: result
+    });
+
+  } catch (error) {
+    logger.error('AI campaign generation failed:', error);
+    throw new AppError(`AI campaign generation failed: ${error.message}`);
+  }
 };

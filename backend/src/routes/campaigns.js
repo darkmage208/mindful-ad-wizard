@@ -14,6 +14,7 @@ import {
   activateCampaign,
   getCampaignMetrics,
   getCampaignLeads,
+  generateAICampaign,
 } from '../controllers/campaignController.js';
 
 const router = express.Router();
@@ -30,6 +31,7 @@ router.delete('/:id', requireOwnership('campaign'), asyncHandler(deleteCampaign)
 
 // Campaign actions
 router.post('/:id/generate-creatives', requireOwnership('campaign'), asyncHandler(generateCreatives));
+router.post('/:id/generate-ai', requireOwnership('campaign'), asyncHandler(generateAICampaign));
 router.post('/:id/approve', requireOwnership('campaign'), asyncHandler(approveCampaign));
 router.post('/:id/pause', requireOwnership('campaign'), asyncHandler(pauseCampaign));
 router.post('/:id/activate', requireOwnership('campaign'), asyncHandler(activateCampaign));

@@ -96,6 +96,24 @@ export const campaignsAPI = {
   
   generateCreatives: (id: string) =>
     api.post<{ success: boolean }>(`/campaigns/${id}/generate-creatives`),
+
+  generateAI: (id: string, options?: {
+    includeImages?: boolean
+    creativesCount?: number
+    imageStyle?: string
+    autoSegment?: boolean
+    generateStrategy?: boolean
+  }) => api.post<{
+    success: boolean
+    data: {
+      campaignId: string
+      segments?: any
+      strategy?: any
+      creatives: any[]
+      success: boolean
+      messages: string[]
+    }
+  }>(`/campaigns/${id}/generate-ai`, options),
   
   approve: (id: string) =>
     api.post<{ success: boolean }>(`/campaigns/${id}/approve`),
