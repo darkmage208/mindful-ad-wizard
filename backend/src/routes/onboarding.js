@@ -6,6 +6,8 @@ import {
   submitOnboarding,
   getOnboardingData,
   updateOnboardingData,
+  generateAdditionalCampaigns,
+  getOnboardingStatus,
 } from '../controllers/onboardingController.js';
 
 const router = express.Router();
@@ -16,5 +18,9 @@ router.use(authenticate);
 router.post('/', validate(onboardingSchemas.submit), asyncHandler(submitOnboarding));
 router.get('/', asyncHandler(getOnboardingData));
 router.put('/', validate(onboardingSchemas.submit), asyncHandler(updateOnboardingData));
+
+// Additional endpoints
+router.get('/status', asyncHandler(getOnboardingStatus));
+router.post('/generate-campaigns', asyncHandler(generateAdditionalCampaigns));
 
 export default router;

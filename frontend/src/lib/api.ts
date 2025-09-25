@@ -39,13 +39,47 @@ export const authAPI = {
 }
 
 export const onboardingAPI = {
-  submit: (data: OnboardingData) =>
-    api.post<{ success: boolean; campaignId: string }>('/onboarding', data),
-  
-  get: () => api.get<OnboardingData>('/onboarding'),
-  
-  update: (data: OnboardingData) =>
-    api.put<{ success: boolean }>('/onboarding', data),
+  submitOnboarding: (data: {
+    city: string
+    targetAudience: string
+    averageTicket: number
+    serviceType: string
+    businessGoals: string[]
+    budget: number
+    experience: string
+  }) =>
+    api.post<{
+      success: boolean
+      data: {
+        onboarding: OnboardingData
+        campaigns: Array<{
+          id: string
+          name: string
+          platform: string
+          budget: number
+          status: string
+        }>
+        campaignCount: number
+      }
+    }>('/onboarding', data),
+
+  getOnboardingData: () =>
+    api.get<{ success: boolean; data: { onboarding: OnboardingData; completed: boolean } }>('/onboarding'),
+
+  updateOnboardingData: (data: Partial<OnboardingData>) =>
+    api.put<{ success: boolean; data: { onboarding: OnboardingData } }>('/onboarding', data),
+
+  getOnboardingStatus: () =>
+    api.get<{ success: boolean; data: { completed: boolean; onboardingId: string | null; completedAt: string | null } }>('/onboarding/status'),
+
+  generateAdditionalCampaigns: () =>
+    api.post<{
+      success: boolean
+      data: {
+        campaigns: Campaign[]
+        count: number
+      }
+    }>('/onboarding/generate-campaigns'),
 }
 
 export const campaignsAPI = {

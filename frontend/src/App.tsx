@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import Layout from '@/components/layout/Layout'
 import LoginForm from '@/components/auth/LoginForm'
 import RegisterForm from '@/components/auth/RegisterForm'
-import OnboardingForm from '@/components/onboarding/OnboardingForm'
+import OnboardingFlow from '@/components/onboarding/OnboardingFlow'
 import Dashboard from '@/pages/Dashboard'
 import Campaigns from '@/pages/Campaigns'
 import CampaignDetail from '@/pages/CampaignDetail'
@@ -45,7 +45,7 @@ function App() {
       <Route path="/*" element={
         <Layout>
           <Routes>
-            <Route path="/onboarding" element={<OnboardingForm />} />
+            <Route path="/onboarding" element={<OnboardingFlow />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/campaigns" element={<Campaigns />} />
             <Route path="/campaigns/new" element={<NewCampaign />} />
