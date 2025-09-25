@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { campaignsAPI, leadsAPI } from '@/lib/api'
+import CreativesManager from '@/components/campaigns/CreativesManager'
+import ApprovalsManager from '@/components/campaigns/ApprovalsManager'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { 
   ArrowLeft, 
@@ -191,6 +193,7 @@ export default function CampaignDetail() {
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="leads">Leads ({campaignLeads.length})</TabsTrigger>
           <TabsTrigger value="creatives">Creatives</TabsTrigger>
+          <TabsTrigger value="approvals">Approvals</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -354,21 +357,15 @@ export default function CampaignDetail() {
         </TabsContent>
 
         <TabsContent value="creatives">
-          <Card>
-            <CardHeader>
-              <CardTitle>Ad Creatives</CardTitle>
-              <CardDescription>Images, videos, and ad copy for this campaign</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12">
-                <Globe className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium">Creatives Coming Soon</h3>
-                <p className="text-muted-foreground">
-                  AI-generated creatives and ad variations will be displayed here.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <CreativesManager campaignId={id!} />
+        </TabsContent>
+
+        <TabsContent value="approvals">
+          <ApprovalsManager
+            campaignId={id!}
+            campaignName={campaign.name}
+            campaignStatus={campaign.status}
+          />
         </TabsContent>
       </Tabs>
     </div>

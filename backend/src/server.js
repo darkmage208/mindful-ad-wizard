@@ -28,6 +28,13 @@ import { errorHandler } from './middleware/errorHandler.js';
 const { logger } = await import('./utils/logger.js');
 const { prisma } = await import('./utils/database.js');
 
+// Initialize scalability and data isolation services
+const { initializeScalability } = await import('./services/scalabilityService.js');
+const { initializeDataIsolation } = await import('./services/dataIsolationService.js');
+
+initializeScalability();
+initializeDataIsolation();
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -155,35 +162,56 @@ const apiRouter = express.Router();
 // Import all routes dynamically
 const [
   authRoutes,
+  securityRoutes,
   userRoutes,
   campaignRoutes,
   leadRoutes,
   landingPageRoutes,
+  landingPageCustomizationRoutes,
   aiRoutes,
+  aiChatRoutes,
   onboardingRoutes,
   adminRoutes,
-  analyticsRoutes
+  analyticsRoutes,
+  metricsRoutes,
+  clientDashboardRoutes,
+  creativeRoutes,
+  approvalRoutes
 ] = await Promise.all([
   import('./routes/auth.js').then(m => m.default),
+  import('./routes/security.js').then(m => m.default),
   import('./routes/users.js').then(m => m.default),
   import('./routes/campaigns.js').then(m => m.default),
   import('./routes/leads.js').then(m => m.default),
   import('./routes/landingPages.js').then(m => m.default),
+  import('./routes/landingPageCustomization.js').then(m => m.default),
   import('./routes/ai.js').then(m => m.default),
+  import('./routes/aiChat.js').then(m => m.default),
   import('./routes/onboarding.js').then(m => m.default),
   import('./routes/admin.js').then(m => m.default),
   import('./routes/analytics.js').then(m => m.default),
+  import('./routes/metrics.js').then(m => m.default),
+  import('./routes/clientDashboard.js').then(m => m.default),
+  import('./routes/creatives.js').then(m => m.default),
+  import('./routes/approvals.js').then(m => m.default),
 ]);
 
 apiRouter.use('/auth', authRoutes);
+apiRouter.use('/security', securityRoutes);
 apiRouter.use('/users', userRoutes);
 apiRouter.use('/campaigns', campaignRoutes);
+apiRouter.use('/creatives', creativeRoutes);
+apiRouter.use('/approvals', approvalRoutes);
 apiRouter.use('/leads', leadRoutes);
 apiRouter.use('/landing-pages', landingPageRoutes);
+apiRouter.use('/landing-pages', landingPageCustomizationRoutes);
 apiRouter.use('/ai', aiRoutes);
+apiRouter.use('/chat', aiChatRoutes);
 apiRouter.use('/onboarding', onboardingRoutes);
 apiRouter.use('/admin', adminRoutes);
 apiRouter.use('/analytics', analyticsRoutes);
+apiRouter.use('/metrics', metricsRoutes);
+apiRouter.use('/client-dashboard', clientDashboardRoutes);
 
 app.use('/api', apiRouter);
 

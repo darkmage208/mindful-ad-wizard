@@ -2,8 +2,16 @@ import { prisma } from '../utils/database.js';
 import { logger } from '../utils/logger.js';
 import { sendLeadNotification } from '../services/emailService.js';
 import {
+  getLeadManagement,
+  generateMessageSuggestions,
+  executeAutomatedFollowUp,
+  executeBulkLeadOperation
+} from '../services/leadManagementService.js';
+import { asyncControllerHandler } from '../utils/controllerHelpers.js';
+import {
   AppError,
   NotFoundError,
+  BadRequestError
 } from '../middleware/errorHandler.js';
 
 /**
@@ -335,6 +343,198 @@ export const exportLeads = async (req, res) => {
 };
 
 /**
+ * Get comprehensive lead management dashboard with AI insights
+ */
+export const getLeadManagementDashboard = asyncControllerHandler(async (req, res) => {
+  const userId = req.user.id;
+  const filters = {
+    status: req.query.status,
+    source: req.query.source,
+    priority: req.query.priority,
+    date_range: req.query.date_range || '30d',
+    page: parseInt(req.query.page) || 1,
+    limit: parseInt(req.query.limit) || 20,
+    sort_by: req.query.sort_by || 'createdAt',
+    sort_order: req.query.sort_order || 'desc',
+    search: req.query.search
+  };
+
+  const managementData = await getLeadManagement(userId, filters);
+
+  res.json({
+    success: true,
+    data: {
+      lead_management: managementData
+    }
+  });
+});
+
+/**
+ * Generate AI-powered message suggestions for lead outreach
+ */
+export const getMessageSuggestions = asyncControllerHandler(async (req, res) => {
+  const { id: leadId } = req.params;
+  const { message_type = 'follow_up', context = {} } = req.body;
+  const userId = req.user.id;
+
+  // Verify lead ownership
+  const lead = await prisma.lead.findFirst({
+    where: { id: leadId, userId }
+  });
+
+  if (!lead) {
+    throw new NotFoundError('Lead not found');
+  }
+
+  const suggestions = await generateMessageSuggestions(leadId, message_type, context);
+
+  res.json({
+    success: true,
+    data: {
+      message_suggestions: suggestions
+    }
+  });
+});
+
+/**
+ * Execute automated follow-up sequence
+ */
+export const executeFollowUpSequence = asyncControllerHandler(async (req, res) => {
+  const { id: leadId } = req.params;
+  const { sequence_type = 'standard_follow_up' } = req.body;
+  const userId = req.user.id;
+
+  // Verify lead ownership
+  const lead = await prisma.lead.findFirst({
+    where: { id: leadId, userId }
+  });
+
+  if (!lead) {
+    throw new NotFoundError('Lead not found');
+  }
+
+  const result = await executeAutomatedFollowUp(leadId, sequence_type, userId);
+
+  res.json({
+    success: true,
+    message: 'Follow-up sequence executed successfully',
+    data: {
+      follow_up_result: result
+    }
+  });
+});
+
+/**
+ * Execute bulk lead operations
+ */
+export const executeBulkOperation = asyncControllerHandler(async (req, res) => {
+  const { operation, lead_ids, parameters = {} } = req.body;
+  const userId = req.user.id;
+
+  if (!operation || !lead_ids || !Array.isArray(lead_ids)) {
+    throw new BadRequestError('Operation and lead_ids array are required');
+  }
+
+  if (lead_ids.length === 0) {
+    throw new BadRequestError('At least one lead ID is required');
+  }
+
+  if (lead_ids.length > 100) {
+    throw new BadRequestError('Maximum 100 leads can be processed in one bulk operation');
+  }
+
+  const results = await executeBulkLeadOperation(userId, operation, lead_ids, parameters);
+
+  res.json({
+    success: true,
+    message: 'Bulk operation completed',
+    data: {
+      bulk_operation_results: results
+    }
+  });
+});
+
+/**
+ * Add interaction to lead
+ */
+export const addLeadInteraction = asyncControllerHandler(async (req, res) => {
+  const { id: leadId } = req.params;
+  const { type, channel, content, successful = true, metadata = {} } = req.body;
+  const userId = req.user.id;
+
+  // Verify lead ownership
+  const lead = await prisma.lead.findFirst({
+    where: { id: leadId, userId }
+  });
+
+  if (!lead) {
+    throw new NotFoundError('Lead not found');
+  }
+
+  const interaction = await prisma.leadInteraction.create({
+    data: {
+      leadId,
+      type,
+      channel,
+      content,
+      successful,
+      metadata,
+      createdAt: new Date()
+    }
+  });
+
+  // Update lead's last contacted timestamp
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: { lastContactedAt: new Date() }
+  });
+
+  logger.info(`Lead interaction added: ${interaction.id} for lead ${leadId}`);
+
+  res.status(201).json({
+    success: true,
+    message: 'Lead interaction added successfully',
+    data: { interaction }
+  });
+});
+
+/**
+ * Add note to lead
+ */
+export const addLeadNote = asyncControllerHandler(async (req, res) => {
+  const { id: leadId } = req.params;
+  const { content, category = 'GENERAL' } = req.body;
+  const userId = req.user.id;
+
+  // Verify lead ownership
+  const lead = await prisma.lead.findFirst({
+    where: { id: leadId, userId }
+  });
+
+  if (!lead) {
+    throw new NotFoundError('Lead not found');
+  }
+
+  const note = await prisma.leadNote.create({
+    data: {
+      leadId,
+      content,
+      category,
+      aiGenerated: false,
+      createdAt: new Date()
+    }
+  });
+
+  logger.info(`Lead note added: ${note.id} for lead ${leadId}`);
+
+  res.status(201).json({
+    success: true,
+    message: 'Lead note added successfully',
+    data: { note }
+  });
+});
+
+/**
  * Get lead statistics
  */
 export const getLeadStats = async (userId, dateRange = 30) => {
@@ -346,7 +546,7 @@ export const getLeadStats = async (userId, dateRange = 30) => {
     prisma.lead.count({
       where: { userId },
     }),
-    
+
     // New leads in date range
     prisma.lead.count({
       where: {
@@ -354,14 +554,14 @@ export const getLeadStats = async (userId, dateRange = 30) => {
         createdAt: { gte: startDate },
       },
     }),
-    
+
     // Leads by status
     prisma.lead.groupBy({
       by: ['status'],
       where: { userId },
       _count: { status: true },
     }),
-    
+
     // Leads by campaign
     prisma.lead.groupBy({
       by: ['campaignId'],

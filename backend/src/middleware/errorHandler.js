@@ -157,6 +157,16 @@ export class ValidationError extends AppError {
 }
 
 /**
+ * Bad request error
+ */
+export class BadRequestError extends AppError {
+  constructor(message = 'Bad request') {
+    super(message, 400);
+    this.name = 'BadRequestError';
+  }
+}
+
+/**
  * Unauthorized error
  */
 export class UnauthorizedError extends AppError {
@@ -183,5 +193,15 @@ export class ConflictError extends AppError {
   constructor(message = 'Conflict') {
     super(message, 409);
     this.name = 'ConflictError';
+  }
+}
+
+/**
+ * Internal server error
+ */
+export class InternalServerError extends AppError {
+  constructor(message = 'Internal server error') {
+    super(message, 500);
+    this.name = 'InternalServerError';
   }
 }

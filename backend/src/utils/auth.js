@@ -97,6 +97,13 @@ export const verifyAccessToken = (token) => {
       audience: 'mindful-ad-wizard-users',
     });
   } catch (error) {
+    logger.error('JWT verification failed:', {
+      errorName: error.name,
+      errorMessage: error.message,
+      tokenLength: token?.length,
+      jwtSecretExists: !!JWT_SECRET,
+      jwtSecretLength: JWT_SECRET?.length
+    });
     if (error.name === 'TokenExpiredError') {
       throw new Error('Token expired');
     }

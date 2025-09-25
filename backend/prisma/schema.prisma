@@ -40,6 +40,17 @@ model User {
   landingPages   LandingPage[]
   notifications  Notification[]
   apiKeys        ApiKey[]
+  approvals      CampaignApproval[]
+  reviewedApprovals CampaignApproval[] @relation("ApprovalReviewer")
+  chatSessions   ChatSession[]
+
+  // Security relations
+  userSessions   UserSession[]
+  oauthConnections OauthConnection[]
+  userMFA        UserMFA?
+  accountLockout AccountLockout?
+  securityEvents SecurityEvent[]
+  passwordHistory PasswordHistory[]
   
   @@map("users")
 }
@@ -73,33 +84,62 @@ model Campaign {
   budget         Float
   targetAudience String
   objectives     String[] // JSON array
-  
+
   // External IDs
   metaCampaignId   String?
   googleCampaignId String?
-  
+  landingPageSlug  String?
+
   // Performance metrics
   impressions  Int @default(0)
   clicks       Int @default(0)
   conversions  Int @default(0)
   cost         Float @default(0)
   leads        Int @default(0)
-  
+
   // AI Generated Content
   aiGenerated Boolean @default(false)
   headlines   String[] // JSON array
   descriptions String[] // JSON array
   keywords    String[] // JSON array
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   // Relations
   user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   creatives Creative[]
   campaignLeads Lead[]
-  
+  approvals CampaignApproval[]
+  landingPages LandingPage[]
+
   @@map("campaigns")
+}
+
+model CampaignApproval {
+  id         String   @id @default(cuid())
+  campaignId String
+  userId     String
+  reviewerId String?
+
+  status       ApprovalStatus
+  submittedAt  DateTime
+  reviewedAt   DateTime?
+
+  reviewData      Json? // Campaign data at time of submission
+  reviewNotes     String?
+  rejectionReasons String[]
+  platformResults Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewer User?    @relation("ApprovalReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  @@map("campaign_approvals")
 }
 
 model Creative {
@@ -127,58 +167,68 @@ model Creative {
 }
 
 model Lead {
-  id         String     @id @default(cuid())
+  id         String      @id @default(cuid())
   userId     String
   campaignId String?
   name       String
   email      String
   phone      String?
   source     String
-  status     LeadStatus @default(NEW)
+  status     LeadStatus  @default(NEW)
+  priority   LeadPriority @default(NORMAL)
   notes      String?
   value      Float?
-  
+
   // Tracking
   ipAddress String?
   userAgent String?
   utmSource String?
   utmMedium String?
   utmCampaign String?
-  
+
+  // AI-powered lead management
+  lastContactedAt DateTime?
+  nextFollowUpAt  DateTime?
+  engagementScore Int?      @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   // Relations
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   campaign Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
-  
+  leadInteractions LeadInteraction[]
+  leadNotes        LeadNote[]
+
   @@map("leads")
 }
 
 model LandingPage {
-  id       String @id @default(cuid())
-  userId   String
-  name     String
-  slug     String @unique
-  template String
-  
+  id         String  @id @default(cuid())
+  userId     String
+  campaignId String?
+  name       String
+  slug       String  @unique
+  template   String
+
   // Customizations (JSON)
-  colors   Json // {primary, secondary, accent}
-  content  Json // {headline, subheadline, description, cta, features, testimonials}
-  contact  Json // {whatsapp, phone, email, address, hours}
-  seo      Json? // {title, description, keywords}
-  images   Json? // [{url, alt, type}]
-  
+  colors  Json // {primary, secondary, accent}
+  content Json // {headline, subheadline, description, cta, features, testimonials}
+  contact Json // {whatsapp, phone, email, address, hours}
+  seo     Json? // {title, description, keywords}
+  images  Json? // [{url, alt, type}]
+
   // Metrics
   visits      Int @default(0)
   conversions Int @default(0)
-  
-  isActive  Boolean @default(true)
+
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
   @@map("landing_pages")
 }
 
@@ -252,6 +302,13 @@ enum CampaignStatus {
   CANCELLED
 }
 
+enum ApprovalStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  NEEDS_CHANGES
+}
+
 enum CreativeType {
   IMAGE
   VIDEO
@@ -262,9 +319,19 @@ enum CreativeType {
 enum LeadStatus {
   NEW
   CONTACTED
+  INTERESTED
   QUALIFIED
+  NURTURING
   CONVERTED
   LOST
+  UNSUBSCRIBED
+}
+
+enum LeadPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
 }
 
 enum NotificationType {
@@ -287,4 +354,221 @@ enum LogLevel {
   WARN
   INFO
   DEBUG
+}
+
+model ChatSession {
+  id           String      @id @default(cuid())
+  userId       String?
+  chatType     ChatType
+  status       ChatStatus  @default(ACTIVE)
+  messageCount Int         @default(0)
+
+  // Metadata for session context
+  metadata     Json?       // Chat type specific data, personality, etc.
+
+  // Timestamps
+  createdAt    DateTime    @default(now())
+  lastActivity DateTime    @default(now())
+  endedAt      DateTime?
+
+  // Relations
+  user         User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  messages     ChatMessage[]
+
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  sessionId String
+  content   String   @db.Text
+  sender    MessageSender // 'user', 'ai', 'system'
+
+  // Metadata for message context
+  metadata  Json?    // Model info, tokens, confidence, etc.
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  // Relations
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+enum ChatType {
+  LEAD_ENGAGEMENT
+  CLIENT_SUPPORT
+  APPOINTMENT_BOOKING
+  GENERAL_INQUIRY
+  CRISIS_SUPPORT
+}
+
+enum ChatStatus {
+  ACTIVE
+  PAUSED
+  ENDED
+  ARCHIVED
+}
+
+enum MessageSender {
+  USER
+  AI
+  SYSTEM
+}
+
+model LeadInteraction {
+  id          String              @id @default(cuid())
+  leadId      String
+  type        LeadInteractionType
+  channel     InteractionChannel
+  content     String              @db.Text
+  successful  Boolean             @default(true)
+  scheduledFor DateTime?
+
+  // Metadata for interaction context
+  metadata    Json?               // AI model, personalization score, etc.
+
+  // Timestamps
+  createdAt   DateTime            @default(now())
+
+  // Relations
+  lead        Lead                @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@map("lead_interactions")
+}
+
+model LeadNote {
+  id          String       @id @default(cuid())
+  leadId      String
+  content     String       @db.Text
+  category    NoteCategory @default(GENERAL)
+  aiGenerated Boolean      @default(false)
+
+  // Timestamps
+  createdAt   DateTime     @default(now())
+
+  // Relations
+  lead        Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@map("lead_notes")
+}
+
+enum LeadInteractionType {
+  INITIAL_CONTACT
+  FOLLOW_UP
+  APPOINTMENT_REMINDER
+  CHECK_IN
+  CRISIS_RESPONSE
+  NURTURING
+  AUTOMATED_FOLLOW_UP
+  AI_MESSAGE_GENERATION
+  PHONE_CALL
+  EMAIL_SENT
+  SMS_SENT
+  WHATSAPP_MESSAGE
+}
+
+enum InteractionChannel {
+  EMAIL
+  PHONE
+  SMS
+  WHATSAPP
+  SYSTEM
+  IN_PERSON
+  VIDEO_CALL
+}
+
+enum NoteCategory {
+  GENERAL
+  APPOINTMENT
+  FOLLOW_UP
+  PERSONAL
+  MEDICAL
+  STATUS_CHANGE
+  AI_INSIGHT
+}
+
+model UserSession {
+  id           String   @id @default(cuid())
+  userId       String
+  sessionToken String   @unique
+  expiresAt    DateTime
+  metadata     Json?    // Device info, IP, etc.
+
+  createdAt    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+model OauthConnection {
+  id           String    @id @default(cuid())
+  userId       String
+  provider     String    // 'google', 'microsoft', etc.
+  providerId   String    // Provider's user ID
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime?
+  lastUsedAt   DateTime?
+
+  createdAt    DateTime  @default(now())
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@map("oauth_connections")
+}
+
+model UserMFA {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  secret      String   // TOTP secret (should be encrypted in production)
+  enabled     Boolean  @default(false)
+  backupCodes String[] // Array of backup codes
+  lastUsed    DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_mfa")
+}
+
+model AccountLockout {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  attempts       Int       @default(0)
+  lockedUntil    DateTime?
+  lastAttemptAt  DateTime?
+  lastAttemptIp  String?
+
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account_lockouts")
+}
+
+model SecurityEvent {
+  id         String   @id @default(cuid())
+  eventType  String   // 'login', 'logout', 'failed_login', 'oauth_login', 'mfa_enabled', etc.
+  userId     String?
+  timestamp  DateTime @default(now())
+  metadata   Json?    // IP, user agent, additional context
+
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("security_events")
+}
+
+model PasswordHistory {
+  id         String   @id @default(cuid())
+  userId     String
+  hashedPassword String
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_history")
 }

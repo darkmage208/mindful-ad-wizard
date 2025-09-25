@@ -12,11 +12,22 @@ import {
 import { logger } from '../utils/logger.js';
 import { sendEmail } from '../services/emailService.js';
 import {
+  generateOAuthUrl,
+  handleOAuthCallback,
+  createSecureSession,
+  validateSession,
+  generateMFASecret,
+  verifyMFAToken,
+  logSecurityEvent,
+  checkAccountLockout
+} from '../services/securityService.js';
+import {
   AppError,
   NotFoundError,
   UnauthorizedError,
   ConflictError,
   ValidationError,
+  BadRequestError,
 } from '../middleware/errorHandler.js';
 import { asyncControllerHandler } from '../utils/controllerHelpers.js';
 
@@ -97,59 +108,143 @@ export const register = asyncControllerHandler(async (req, res) => {
  * Login user
  */
 export const login = asyncControllerHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, mfaCode } = req.body;
+  const clientInfo = {
+    ipAddress: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent'),
+  };
 
-  // Find user
-  const user = await prisma.user.findUnique({
-    where: { email },
-  });
+  try {
+    // Check account lockout
+    await checkAccountLockout(email, clientInfo);
 
-  if (!user) {
-    throw new UnauthorizedError('Invalid credentials');
+    // Find user with MFA data
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        userMFA: true,
+        accountLockout: true,
+      },
+    });
+
+    if (!user) {
+      await logSecurityEvent('failed_login', null, {
+        reason: 'user_not_found',
+        email,
+        ...clientInfo,
+      });
+      throw new UnauthorizedError('Invalid credentials');
+    }
+
+    // Verify password
+    const isValidPassword = await verifyPassword(password, user.password);
+    if (!isValidPassword) {
+      await logSecurityEvent('failed_login', user.id, {
+        reason: 'invalid_password',
+        ...clientInfo,
+      });
+      throw new UnauthorizedError('Invalid credentials');
+    }
+
+    // Check if account is active
+    if (!user.isActive) {
+      await logSecurityEvent('failed_login', user.id, {
+        reason: 'account_inactive',
+        ...clientInfo,
+      });
+      throw new UnauthorizedError('Account is deactivated');
+    }
+
+    // Check MFA if enabled
+    if (user.userMFA?.enabled) {
+      if (!mfaCode) {
+        return res.json({
+          success: false,
+          requireMFA: true,
+          message: 'Multi-factor authentication required',
+        });
+      }
+
+      const mfaValid = await verifyMFAToken(user.id, mfaCode);
+      if (!mfaValid) {
+        await logSecurityEvent('failed_mfa', user.id, {
+          ...clientInfo,
+        });
+        throw new UnauthorizedError('Invalid MFA code');
+      }
+    }
+
+    // Create secure session
+    const sessionToken = await createSecureSession(user.id, clientInfo);
+
+    // Update last login
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() },
+    });
+
+    // Generate tokens
+    const userPayload = sanitizeUserForToken(user);
+    const accessToken = generateAccessToken(userPayload);
+    const refreshTokenValue = generateRefreshToken({ userId: user.id });
+
+    // Log successful login
+    await logSecurityEvent('login', user.id, {
+      sessionToken,
+      ...clientInfo,
+    });
+
+    // Remove sensitive data
+    const { password: _, verifyToken, resetToken, resetExpires, userMFA, accountLockout, ...safeUser } = user;
+
+    logger.info(`User logged in: ${user.email}`);
+
+    res.json({
+      success: true,
+      message: 'Login successful',
+      data: {
+        user: safeUser,
+        accessToken,
+        refreshToken: refreshTokenValue,
+        sessionToken,
+      },
+    });
+  } catch (error) {
+    // Handle account lockout on repeated failures
+    if (error instanceof UnauthorizedError && email) {
+      await checkAccountLockout(email, clientInfo, true);
+    }
+    throw error;
   }
-
-  // Verify password
-  const isValidPassword = await verifyPassword(password, user.password);
-  if (!isValidPassword) {
-    throw new UnauthorizedError('Invalid credentials');
-  }
-
-  // Check if account is active
-  if (!user.isActive) {
-    throw new UnauthorizedError('Account is deactivated');
-  }
-
-  // Update last login
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { lastLogin: new Date() },
-  });
-
-  // Generate tokens
-  const userPayload = sanitizeUserForToken(user);
-  const accessToken = generateAccessToken(userPayload);
-  const refreshTokenValue = generateRefreshToken({ userId: user.id });
-
-  // Remove sensitive data
-  const { password: _, verifyToken, resetToken, resetExpires, ...safeUser } = user;
-
-  logger.info(`User logged in: ${user.email}`);
-
-  res.json({
-    success: true,
-    message: 'Login successful',
-    data: {
-      user: safeUser,
-      accessToken,
-      refreshToken: refreshTokenValue,
-    },
-  });
 });
 
 /**
  * Logout user
  */
 export const logout = async (req, res) => {
+  const { sessionToken } = req.body;
+  const clientInfo = {
+    ipAddress: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent'),
+  };
+
+  if (sessionToken) {
+    try {
+      // Invalidate session
+      await prisma.userSession.delete({
+        where: { sessionToken },
+      });
+    } catch (error) {
+      logger.warn('Session cleanup failed during logout:', error);
+    }
+  }
+
+  // Log logout event
+  await logSecurityEvent('logout', req.user.id, {
+    sessionToken,
+    ...clientInfo,
+  });
+
   logger.info(`User logged out: ${req.user.email}`);
 
   res.json({
@@ -471,3 +566,189 @@ export const getProfile = async (req, res) => {
     data: { user },
   });
 };
+
+/**
+ * OAuth login initiation
+ */
+export const oauthLogin = asyncControllerHandler(async (req, res) => {
+  const { provider } = req.params;
+  const { redirectUrl } = req.query;
+
+  try {
+    const oauthUrl = generateOAuthUrl(provider, redirectUrl);
+
+    res.json({
+      success: true,
+      data: {
+        oauthUrl,
+        provider,
+      },
+    });
+  } catch (error) {
+    throw new BadRequestError(`OAuth provider '${provider}' not supported or configured`);
+  }
+});
+
+/**
+ * OAuth callback handler
+ */
+export const oauthCallback = asyncControllerHandler(async (req, res) => {
+  const { provider } = req.params;
+  const { code, state } = req.query;
+  const clientInfo = {
+    ipAddress: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent'),
+  };
+
+  try {
+    const result = await handleOAuthCallback(provider, code, state, null);
+
+    // Create secure session
+    const sessionToken = await createSecureSession(result.user.id, clientInfo);
+
+    // Generate tokens
+    const userPayload = sanitizeUserForToken(result.user);
+    const accessToken = generateAccessToken(userPayload);
+    const refreshTokenValue = generateRefreshToken({ userId: result.user.id });
+
+    // Log OAuth login
+    await logSecurityEvent('oauth_login', result.user.id, {
+      provider,
+      sessionToken,
+      isNewUser: result.isNewUser,
+      ...clientInfo,
+    });
+
+    logger.info(`OAuth login successful: ${result.user.email} via ${provider}`);
+
+    res.json({
+      success: true,
+      message: result.isNewUser ? 'Account created and logged in successfully' : 'Login successful',
+      data: {
+        user: result.user,
+        accessToken,
+        refreshToken: refreshTokenValue,
+        sessionToken,
+        isNewUser: result.isNewUser,
+      },
+    });
+  } catch (error) {
+    await logSecurityEvent('failed_oauth_login', null, {
+      provider,
+      error: error.message,
+      ...clientInfo,
+    });
+    throw error;
+  }
+});
+
+/**
+ * Setup MFA
+ */
+export const setupMFAController = asyncControllerHandler(async (req, res) => {
+  const userId = req.user.id;
+
+  const mfaSetup = await generateMFASecret(userId);
+
+  await logSecurityEvent('mfa_setup_initiated', userId, {
+    ipAddress: req.ip || req.connection.remoteAddress,
+  });
+
+  res.json({
+    success: true,
+    message: 'MFA setup initiated',
+    data: {
+      qrCode: mfaSetup.qrCode,
+      secret: mfaSetup.secret,
+      backupCodes: mfaSetup.backupCodes,
+    },
+  });
+});
+
+/**
+ * Verify and enable MFA
+ */
+export const verifyMFAController = asyncControllerHandler(async (req, res) => {
+  const { token } = req.body;
+  const userId = req.user.id;
+
+  const isValid = await verifyMFAToken(userId, token);
+
+  if (!isValid) {
+    throw new UnauthorizedError('Invalid MFA token');
+  }
+
+  await logSecurityEvent('mfa_enabled', userId, {
+    ipAddress: req.ip || req.connection.remoteAddress,
+  });
+
+  res.json({
+    success: true,
+    message: 'MFA enabled successfully',
+  });
+});
+
+/**
+ * Disable MFA
+ */
+export const disableMFA = asyncControllerHandler(async (req, res) => {
+  const { password } = req.body;
+  const userId = req.user.id;
+
+  // Get user to verify password
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new NotFoundError('User');
+  }
+
+  // Verify password
+  const isValidPassword = await verifyPassword(password, user.password);
+  if (!isValidPassword) {
+    throw new UnauthorizedError('Invalid password');
+  }
+
+  // Disable MFA
+  await prisma.userMFA.update({
+    where: { userId },
+    data: {
+      enabled: false,
+      secret: null,
+      backupCodes: [],
+    },
+  });
+
+  await logSecurityEvent('mfa_disabled', userId, {
+    ipAddress: req.ip || req.connection.remoteAddress,
+  });
+
+  logger.info(`MFA disabled for user: ${user.email}`);
+
+  res.json({
+    success: true,
+    message: 'MFA disabled successfully',
+  });
+});
+
+/**
+ * Verify session token
+ */
+export const verifySession = asyncControllerHandler(async (req, res) => {
+  const { sessionToken } = req.body;
+
+  const sessionData = await validateSession(sessionToken, sessionToken);
+
+  if (!sessionData) {
+    throw new UnauthorizedError('Invalid or expired session');
+  }
+
+  res.json({
+    success: true,
+    data: {
+      session: sessionData,
+      valid: true,
+    },
+  });
+});

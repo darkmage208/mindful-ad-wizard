@@ -112,18 +112,60 @@ export const createGoogleCampaign = async (campaignData) => {
       await customer.adGroupCriteria.mutate(keywordOperations);
     }
 
-    // Create responsive search ad
-    if (campaignData.headlines && campaignData.descriptions) {
+    // Create ads from database creatives or fallback to campaign data
+    const createdAds = [];
+    if (campaignData.creatives && campaignData.creatives.length > 0) {
+      // Create responsive search ads from database creatives
+      for (const dbCreative of campaignData.creatives) {
+        const headlines = [
+          { text: dbCreative.headline.substring(0, 30) },
+          { text: `${dbCreative.headline.substring(0, 25)} Now` },
+          { text: `Get ${dbCreative.headline.substring(0, 24)}` }
+        ];
+
+        const descriptions = [
+          { text: dbCreative.description.substring(0, 90) },
+          { text: `${dbCreative.description.substring(0, 85)} Call today.` }
+        ];
+
+        const responsiveSearchAd = {
+          final_urls: [`${process.env.FRONTEND_URL}/lp/${campaignData.landingPageSlug || 'default'}`],
+          headlines,
+          descriptions,
+          path1: 'therapy',
+          path2: 'help',
+        };
+
+        const adOperation = {
+          create: {
+            ad_group: `customers/${customerId}/adGroups/${createdAdGroupId}`,
+            status: 'ENABLED',
+            ad: {
+              responsive_search_ad: responsiveSearchAd,
+            },
+          },
+        };
+
+        const adResponse = await customer.adGroupAds.mutate([adOperation]);
+        const createdAdId = adResponse.results[0].resource_name.split('/')[7];
+
+        createdAds.push({
+          adId: createdAdId,
+          dbCreativeId: dbCreative.id
+        });
+      }
+    } else if (campaignData.headlines && campaignData.descriptions) {
+      // Fallback to legacy ad creation
       const headlines = campaignData.headlines.slice(0, 3).map(headline => ({
-        text: headline.substring(0, 30), // Max 30 characters
+        text: headline.substring(0, 30),
       }));
 
       const descriptions = campaignData.descriptions.slice(0, 2).map(description => ({
-        text: description.substring(0, 90), // Max 90 characters
+        text: description.substring(0, 90),
       }));
 
       const responsiveSearchAd = {
-        final_urls: [process.env.FRONTEND_URL], // Would be user's landing page
+        final_urls: [`${process.env.FRONTEND_URL}/lp/${campaignData.landingPageSlug || 'default'}`],
         headlines,
         descriptions,
       };
@@ -138,15 +180,25 @@ export const createGoogleCampaign = async (campaignData) => {
         },
       };
 
-      await customer.adGroupAds.mutate([adOperation]);
+      const adResponse = await customer.adGroupAds.mutate([adOperation]);
+      const createdAdId = adResponse.results[0].resource_name.split('/')[7];
+
+      createdAds.push({
+        adId: createdAdId
+      });
     }
 
     logger.info(`Google Ads campaign created: ${createdCampaignId}`, {
       campaignId: campaignData.id,
       googleCampaignId: createdCampaignId,
+      adsCreated: createdAds.length,
     });
 
-    return createdCampaignId;
+    return {
+      campaignId: createdCampaignId,
+      adGroupId: createdAdGroupId,
+      ads: createdAds
+    };
   } catch (error) {
     logger.error('Failed to create Google Ads campaign:', error);
     throw new Error(`Google Ads campaign creation failed: ${error.message}`);
@@ -288,6 +340,240 @@ export const getGoogleCampaignMetrics = async (googleCampaignId) => {
 };
 
 /**
+ * Create psychology-specific campaign with enhanced targeting
+ * @param {object} campaignData - Campaign data
+ * @returns {Promise<object>} Campaign creation result
+ */
+export const createPsychologyCampaign = async (campaignData) => {
+  if (!isInitialized) {
+    throw new Error('Google Ads API not initialized');
+  }
+
+  try {
+    const customerId = process.env.GOOGLE_ADS_CUSTOMER_ID;
+    if (!customerId) {
+      throw new Error('Google Ads Customer ID not configured');
+    }
+
+    const customer = googleAds.Customer({
+      customer_id: customerId,
+      refresh_token: process.env.GOOGLE_ADS_REFRESH_TOKEN,
+    });
+
+    // Create campaign with psychology-specific settings
+    const campaign = {
+      name: `${campaignData.name} - Psychology`,
+      advertising_channel_type: 'SEARCH',
+      status: 'PAUSED',
+      campaign_budget: {
+        amount_micros: campaignData.budget * 1000000 / 30,
+        delivery_method: 'STANDARD',
+      },
+      network_settings: {
+        target_google_search: true,
+        target_search_network: true,
+        target_content_network: false,
+        target_partner_search_network: false,
+      },
+      bidding_strategy: {
+        maximize_conversions: {
+          target_cpa_micros: (campaignData.averageTicket || 150) * 1000000 * 0.3, // 30% of session cost
+        },
+      },
+      geo_target_type_setting: {
+        positive_geo_target_type: 'PRESENCE_OR_INTEREST',
+        negative_geo_target_type: 'PRESENCE',
+      },
+    };
+
+    const campaignOperation = {
+      create: campaign,
+    };
+
+    const response = await customer.campaigns.mutate([campaignOperation]);
+    const createdCampaignId = response.results[0].resource_name.split('/')[3];
+
+    // Create ad group with psychology-specific keywords
+    const adGroup = {
+      name: `${campaignData.serviceType || 'Therapy'} - Ad Group`,
+      campaign: `customers/${customerId}/campaigns/${createdCampaignId}`,
+      status: 'ENABLED',
+      type: 'SEARCH_STANDARD',
+      cpc_bid_micros: 3 * 1000000, // $3 max CPC for competitive psychology keywords
+    };
+
+    const adGroupOperation = {
+      create: adGroup,
+    };
+
+    const adGroupResponse = await customer.adGroups.mutate([adGroupOperation]);
+    const createdAdGroupId = adGroupResponse.results[0].resource_name.split('/')[5];
+
+    // Add psychology-specific keywords
+    const psychologyKeywords = generatePsychologyKeywords(campaignData);
+    const keywordOperations = psychologyKeywords.map(keyword => ({
+      create: {
+        ad_group: `customers/${customerId}/adGroups/${createdAdGroupId}`,
+        keyword: {
+          text: keyword.text,
+          match_type: keyword.matchType,
+        },
+        cpc_bid_micros: keyword.bidMicros,
+      },
+    }));
+
+    if (keywordOperations.length > 0) {
+      await customer.adGroupCriteria.mutate(keywordOperations);
+    }
+
+    // Add location targeting if city provided
+    if (campaignData.city) {
+      const locationCriteria = await buildLocationTargeting(customer, campaignData.city);
+      if (locationCriteria.length > 0) {
+        await customer.campaignCriteria.mutate(locationCriteria.map(location => ({
+          create: {
+            campaign: `customers/${customerId}/campaigns/${createdCampaignId}`,
+            location: {
+              geo_target_constant: location.geoTargetConstant,
+            },
+          },
+        })));
+      }
+    }
+
+    // Add sitelink extensions
+    const sitelinkExtensions = createPsychologySitelinks(campaignData);
+    if (sitelinkExtensions.length > 0) {
+      const extensionOperation = {
+        create: {
+          customer: `customers/${customerId}`,
+          sitelink_feed_item: {
+            sitelink_text: sitelinkExtensions[0].text,
+            sitelink_final_urls: sitelinkExtensions[0].urls,
+            sitelink_description1: sitelinkExtensions[0].description1,
+            sitelink_description2: sitelinkExtensions[0].description2,
+          },
+        },
+      };
+
+      // Note: Extension creation would need proper implementation for production
+      logger.info('Psychology sitelinks would be created:', sitelinkExtensions);
+    }
+
+    logger.info(`Psychology-specific Google Ads campaign created: ${createdCampaignId}`);
+
+    return {
+      campaignId: createdCampaignId,
+      adGroupId: createdAdGroupId,
+      keywordsAdded: psychologyKeywords.length
+    };
+
+  } catch (error) {
+    logger.error('Failed to create psychology Google Ads campaign:', error);
+    throw new Error(`Psychology campaign creation failed: ${error.message}`);
+  }
+};
+
+/**
+ * Generate psychology-specific keywords
+ */
+const generatePsychologyKeywords = (campaignData) => {
+  const baseKeywords = [
+    { text: 'therapist near me', matchType: 'PHRASE', bidMicros: 4000000 },
+    { text: 'counseling services', matchType: 'PHRASE', bidMicros: 3500000 },
+    { text: 'mental health help', matchType: 'PHRASE', bidMicros: 3000000 },
+    { text: 'anxiety therapy', matchType: 'PHRASE', bidMicros: 4500000 },
+    { text: 'depression counseling', matchType: 'PHRASE', bidMicros: 4000000 },
+    { text: 'couples therapy', matchType: 'PHRASE', bidMicros: 3500000 },
+    { text: 'psychologist', matchType: 'BROAD', bidMicros: 3000000 },
+  ];
+
+  // Add city-specific keywords
+  if (campaignData.city) {
+    const cityKeywords = [
+      { text: `therapist ${campaignData.city}`, matchType: 'PHRASE', bidMicros: 5000000 },
+      { text: `counseling ${campaignData.city}`, matchType: 'PHRASE', bidMicros: 4500000 },
+      { text: `psychologist ${campaignData.city}`, matchType: 'PHRASE', bidMicros: 4000000 },
+    ];
+    baseKeywords.push(...cityKeywords);
+  }
+
+  // Add service-specific keywords
+  if (campaignData.serviceType) {
+    const serviceType = campaignData.serviceType.toLowerCase();
+    if (serviceType.includes('couples')) {
+      baseKeywords.push(
+        { text: 'marriage counseling', matchType: 'PHRASE', bidMicros: 4000000 },
+        { text: 'relationship therapy', matchType: 'PHRASE', bidMicros: 3500000 }
+      );
+    }
+    if (serviceType.includes('family')) {
+      baseKeywords.push(
+        { text: 'family therapy', matchType: 'PHRASE', bidMicros: 3500000 },
+        { text: 'child counseling', matchType: 'PHRASE', bidMicros: 4000000 }
+      );
+    }
+    if (serviceType.includes('group')) {
+      baseKeywords.push(
+        { text: 'group therapy', matchType: 'PHRASE', bidMicros: 3000000 }
+      );
+    }
+  }
+
+  return baseKeywords.slice(0, 20); // Limit to 20 keywords
+};
+
+/**
+ * Create psychology-specific sitelinks
+ */
+const createPsychologySitelinks = (campaignData) => {
+  return [
+    {
+      text: 'Book Consultation',
+      urls: [`${process.env.FRONTEND_URL}/book`],
+      description1: 'Schedule your first session',
+      description2: 'Available appointments'
+    },
+    {
+      text: 'Our Services',
+      urls: [`${process.env.FRONTEND_URL}/services`],
+      description1: 'Therapy & counseling',
+      description2: 'Professional help'
+    },
+    {
+      text: 'About Us',
+      urls: [`${process.env.FRONTEND_URL}/about`],
+      description1: 'Licensed therapists',
+      description2: 'Years of experience'
+    },
+    {
+      text: 'Contact',
+      urls: [`${process.env.FRONTEND_URL}/contact`],
+      description1: 'Get in touch today',
+      description2: 'Call or message us'
+    }
+  ];
+};
+
+/**
+ * Build location targeting for city
+ */
+const buildLocationTargeting = async (customer, city) => {
+  try {
+    // This is a simplified example. In production, you would:
+    // 1. Use Google Ads API to search for geo target constants
+    // 2. Return proper location targeting criteria
+
+    // For now, return empty array - would need proper geo targeting implementation
+    logger.info(`Location targeting would be added for: ${city}`);
+    return [];
+  } catch (error) {
+    logger.warn('Failed to build location targeting:', error);
+    return [];
+  }
+};
+
+/**
  * Test Google Ads API connection
  */
 export const testGoogleConnection = async () => {
@@ -308,11 +594,16 @@ export const testGoogleConnection = async () => {
 
     // Test by fetching customer info
     const customers = await customer.customers.list();
-    
+
     if (customers.length > 0) {
-      return { success: true, customer: customers[0].descriptive_name };
+      return {
+        success: true,
+        customer: customers[0].descriptive_name,
+        customerId: customerId,
+        apiVersion: 'v14' // Google Ads API version
+      };
     }
-    
+
     return { success: true, customer: 'Connected' };
   } catch (error) {
     return { success: false, error: error.message };

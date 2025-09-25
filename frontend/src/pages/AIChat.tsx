@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useState, useRef, useEffect } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { aiAPI, campaignsAPI } from '@/lib/api'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { aiAPI, campaignsAPI, aiChatAPI } from '@/lib/api'
 import { Campaign } from '@/types'
 import {
   Send,
@@ -19,8 +21,17 @@ import {
   Target,
   Lightbulb,
   Loader2,
+  Plus,
+  History,
+  Settings,
+  HeartHandshake,
+  UserCheck,
+  Calendar,
+  HelpCircle,
+  AlertCircle
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { formatDate } from '@/lib/utils'
 
 interface Message {
   id: string

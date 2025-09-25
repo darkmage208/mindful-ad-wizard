@@ -1,8 +1,9 @@
 import { prisma } from '../utils/database.js';
 import { logger } from '../utils/logger.js';
-import { NotFoundError } from '../middleware/errorHandler.js';
+import { NotFoundError, AppError } from '../middleware/errorHandler.js';
 import { generateLandingPageContent, generateLandingPageImages } from '../services/openaiService.js';
 import { storeGeneratedImages, getFallbackImage } from '../services/imageService.js';
+import { generateLandingPageFromCampaign } from '../services/landingPageService.js';
 import {
   createPaginatedResponse,
   buildPaginationParams,
@@ -420,6 +421,60 @@ const getTemplateColors = (template) => {
 
   return colorSchemes[template] || colorSchemes['psychology-practice'];
 };
+
+/**
+ * Generate landing page from campaign data
+ */
+export const generateLandingPageFromCampaignEndpoint = asyncControllerHandler(async (req, res) => {
+  const { campaignId } = req.params;
+  const userId = req.user.id;
+
+  try {
+    // Get campaign with all related data
+    const campaign = await prisma.campaign.findFirst({
+      where: {
+        id: campaignId,
+        userId
+      },
+      include: {
+        user: {
+          include: {
+            onboardingData: true
+          }
+        }
+      }
+    });
+
+    if (!campaign) {
+      throw new NotFoundError('Campaign not found');
+    }
+
+    const result = await generateLandingPageFromCampaign(campaign);
+
+    // Update campaign with landing page slug
+    await prisma.campaign.update({
+      where: { id: campaignId },
+      data: {
+        // Store the landing page slug for campaign reference
+        landingPageSlug: result.slug
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Landing page generated successfully from campaign data',
+      data: {
+        landingPage: result.landingPage,
+        url: result.url,
+        slug: result.slug,
+        warnings: result.imageWarnings
+      }
+    });
+  } catch (error) {
+    logger.error('Campaign landing page generation failed:', error);
+    throw new AppError(`Failed to generate landing page from campaign: ${error.message}`);
+  }
+});
 
 /**
  * Get public landing page by slug (no authentication required)

@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { campaignsAPI, leadsAPI } from '@/lib/api'
+import { campaignsAPI, leadsAPI, clientDashboardAPI } from '@/lib/api'
+import MetricsOverview from '@/components/dashboard/MetricsOverview'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { Campaign, Lead, CampaignMetrics } from '@/types'
 import {
@@ -12,20 +13,12 @@ import {
   Users,
   DollarSign,
   TrendingUp,
-  Activity,
-  Eye,
-  MousePointer,
-  PhoneCall,
   ArrowUpRight,
-  ArrowDownRight,
   Clock,
   Zap,
   BarChart2,
-  PieChart,
   Calendar,
-  Filter,
   Download,
-  Share2,
 } from 'lucide-react'
 
 export default function Dashboard() {
@@ -45,37 +38,11 @@ export default function Dashboard() {
   const activeCampaigns = campaigns.filter(c => c.status === 'active')
   const totalBudget = campaigns.reduce((sum, campaign) => sum + campaign.budget, 0)
   const newLeads = leads.filter(lead => lead.status === 'new').length
-  
-  const totalMetrics = campaigns.reduce(
-    (acc, campaign) => {
-      const metrics = campaign.metrics || {
-        impressions: 0,
-        clicks: 0,
-        conversions: 0,
-        cost: 0,
-        ctr: 0,
-        cpc: 0,
-        cpl: 0,
-        leads: 0,
-      }
-      return {
-        impressions: acc.impressions + metrics.impressions,
-        clicks: acc.clicks + metrics.clicks,
-        conversions: acc.conversions + metrics.conversions,
-        cost: acc.cost + metrics.cost,
-        leads: acc.leads + metrics.leads,
-      }
-    },
-    { impressions: 0, clicks: 0, conversions: 0, cost: 0, leads: 0 }
-  )
 
-  const avgCTR = totalMetrics.impressions > 0 
-    ? ((totalMetrics.clicks / totalMetrics.impressions) * 100).toFixed(2)
-    : '0.00'
-
-  const avgCPC = totalMetrics.clicks > 0
-    ? (totalMetrics.cost / totalMetrics.clicks).toFixed(2)
-    : '0.00'
+  const totalSpend = campaigns.reduce((sum, campaign) => {
+    const metrics = campaign.metrics || { cost: 0 }
+    return sum + metrics.cost
+  }, 0)
 
   return (
     <div className="space-y-8">
@@ -194,7 +161,7 @@ export default function Dashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-orange-900">{formatCurrency(totalMetrics.cost)}</div>
+            <div className="text-3xl font-bold text-orange-900">{formatCurrency(totalSpend)}</div>
             <p className="text-sm text-orange-700 flex items-center mt-2">
               <ArrowUpRight className="w-4 h-4 mr-1" />
               This month
@@ -203,90 +170,8 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Performance Overview */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center">
-              <PieChart className="w-4 h-4 text-muted-foreground" />
-            </div>
-            <h2 className="text-xl font-semibold">Performance Metrics</h2>
-          </div>
-          <Button variant="outline" size="sm">
-            <Share2 className="mr-2 h-4 w-4" />
-            Share Report
-          </Button>
-        </div>
-
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
-          <Card className="card-hover">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium">Impressions</CardTitle>
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Eye className="h-4 w-4 text-blue-600" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalMetrics.impressions.toLocaleString()}</div>
-              <div className="flex items-center mt-2 text-sm text-green-600">
-                <ArrowUpRight className="w-4 h-4 mr-1" />
-                <span>+12.5%</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="card-hover">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium">Clicks</CardTitle>
-              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                <MousePointer className="h-4 w-4 text-green-600" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalMetrics.clicks.toLocaleString()}</div>
-              <p className="text-sm text-muted-foreground mt-2 flex items-center">
-                <BarChart2 className="w-4 h-4 mr-1" />
-                {avgCTR}% CTR
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="card-hover">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium">Leads Generated</CardTitle>
-              <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                <PhoneCall className="h-4 w-4 text-purple-600" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalMetrics.leads}</div>
-              <p className="text-sm text-muted-foreground mt-2 flex items-center">
-                <DollarSign className="w-4 h-4 mr-1" />
-                {formatCurrency(parseFloat(avgCPC))} avg CPC
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="card-hover">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium">Conversions</CardTitle>
-              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Activity className="h-4 w-4 text-orange-600" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalMetrics.conversions}</div>
-              <p className="text-sm text-muted-foreground mt-2 flex items-center">
-                <TrendingUp className="w-4 h-4 mr-1" />
-                {totalMetrics.leads > 0
-                  ? ((totalMetrics.conversions / totalMetrics.leads) * 100).toFixed(1)
-                  : '0'
-                }% rate
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      {/* Enhanced Metrics Overview */}
+      <MetricsOverview className="mb-6" />
 
       {/* Recent Campaigns */}
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">

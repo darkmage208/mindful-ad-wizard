@@ -179,11 +179,12 @@ async function seed() {
         }
 
         // Create demo landing pages
+        const slug = campaign.name.toLowerCase().replace(/\\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         await prisma.landingPage.create({
           data: {
             userId: user.id,
             name: `${campaign.name} - Landing Page`,
-            url: `https://mindfuladwizard.com/lp/${campaign.name.toLowerCase().replace(/\\s+/g, '-')}`,
+            slug: slug,
             template: 'psychology-modern',
             colors: {
               primary: '#2563eb',

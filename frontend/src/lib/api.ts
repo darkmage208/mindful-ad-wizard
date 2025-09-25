@@ -170,3 +170,230 @@ export const usersAPI = {
     })
   },
 }
+
+export const creativesAPI = {
+  generateForCampaign: (campaignId: string, options?: {
+    includeImages?: boolean
+    creativesCount?: number
+    imageStyle?: string
+    includeVideo?: boolean
+  }) => api.post(`/creatives/campaign/${campaignId}/generate`, options),
+
+  getCampaignCreatives: (campaignId: string) =>
+    api.get(`/creatives/campaign/${campaignId}`),
+
+  getById: (id: string) => api.get(`/creatives/${id}`),
+
+  update: (id: string, data: {
+    headline?: string
+    description?: string
+    cta?: string
+    isActive?: boolean
+  }) => api.put(`/creatives/${id}`, data),
+
+  delete: (id: string) => api.delete(`/creatives/${id}`),
+
+  getAnalytics: (id: string) => api.get(`/creatives/${id}/analytics`),
+
+  updateMetrics: (id: string, metrics: {
+    impressions?: number
+    clicks?: number
+    conversions?: number
+  }) => api.put(`/creatives/${id}/metrics`, metrics),
+
+  duplicate: (id: string, variations?: number) =>
+    api.post(`/creatives/${id}/duplicate`, { variations }),
+
+  toggleStatus: (id: string) => api.post(`/creatives/${id}/toggle-status`),
+}
+
+export const approvalsAPI = {
+  submitCampaign: (campaignId: string) =>
+    api.post(`/approvals/campaigns/${campaignId}/submit`),
+
+  approveCampaign: (campaignId: string, data: {
+    notes?: string
+    useLeadGen?: boolean
+    usePsychologyTargeting?: boolean
+    platformSpecificSettings?: any
+  }) => api.post(`/approvals/campaigns/${campaignId}/approve`, data),
+
+  rejectCampaign: (campaignId: string, data: {
+    feedback: string
+    reasons?: string[]
+    needsChanges?: boolean
+    suggestedChanges?: string[]
+  }) => api.post(`/approvals/campaigns/${campaignId}/reject`, data),
+
+  getPending: () => api.get('/approvals/pending'),
+
+  getHistory: (campaignId: string) =>
+    api.get(`/approvals/campaigns/${campaignId}/history`),
+
+  bulkApprove: (campaignIds: string[], approvalData?: any) =>
+    api.post('/approvals/bulk/approve', { campaignIds, approvalData }),
+
+  getStatistics: () => api.get('/approvals/statistics'),
+}
+
+export const aiChatAPI = {
+  startSession: (chatType: string, metadata?: any) =>
+    api.post('/chat/start', { chat_type: chatType, metadata }),
+
+  sendMessage: (sessionId: string, message: string) =>
+    api.post(`/chat/${sessionId}/message`, { message }),
+
+  getSession: (sessionId: string) => api.get(`/chat/${sessionId}`),
+
+  endSession: (sessionId: string, reason?: string) =>
+    api.post(`/chat/${sessionId}/end`, { reason }),
+
+  getHistory: () => api.get('/chat/history'),
+
+  getAnalytics: (params?: { period?: string; admin_view?: boolean }) =>
+    api.get('/chat/analytics', { params }),
+
+  getTypes: () => api.get('/chat/types'),
+
+  getSuggestions: (chatType: string, context?: string, userInput?: string) =>
+    api.post('/chat/suggestions', { chat_type: chatType, context, user_input: userInput }),
+
+  healthCheck: () => api.get('/chat/health'),
+}
+
+export const metricsAPI = {
+  getDashboard: (params?: {
+    timeframe?: string
+    include_system?: boolean
+    refresh_cache?: boolean
+  }) => api.get('/metrics/dashboard', { params }),
+
+  getCategoryMetrics: (category: string, params?: {
+    timeframe?: string
+    detailed?: boolean
+  }) => api.get(`/metrics/category/${category}`, { params }),
+
+  getRealTime: () => api.get('/metrics/realtime'),
+
+  getComparison: (params?: {
+    current_period?: string
+    comparison_period?: string
+    offset_days?: number
+  }) => api.get('/metrics/comparison', { params }),
+
+  export: (params?: {
+    timeframe?: string
+    format?: string
+    categories?: string
+    include_system?: boolean
+  }) => api.get('/metrics/export', { params, responseType: 'blob' }),
+}
+
+export const clientDashboardAPI = {
+  getDashboard: (params?: { timeframe?: string; refresh?: boolean }) =>
+    api.get('/client-dashboard', { params }),
+
+  getCampaignManagement: (params?: {
+    status?: string
+    platform?: string
+    sort_by?: string
+    sort_order?: string
+    page?: number
+    limit?: number
+  }) => api.get('/client-dashboard/campaigns', { params }),
+
+  getLeadManagement: (params?: {
+    status?: string
+    source?: string
+    date_range?: string
+    page?: number
+    limit?: number
+  }) => api.get('/client-dashboard/leads', { params }),
+
+  getQuickActions: () => api.get('/client-dashboard/quick-actions'),
+
+  executeQuickAction: (actionId: string, parameters: any) =>
+    api.post('/client-dashboard/quick-actions/execute', {
+      action_id: actionId,
+      parameters
+    }),
+
+  getActivity: (params?: {
+    page?: number
+    limit?: number
+    type?: string
+  }) => api.get('/client-dashboard/activity', { params }),
+
+  updateWidget: (widgetId: string, config: any) =>
+    api.put(`/client-dashboard/widgets/${widgetId}`, { config }),
+
+  updatePreferences: (preferences: {
+    theme?: string
+    timezone?: string
+    default_timeframe?: string
+    notifications?: any
+    auto_refresh?: boolean
+    refresh_interval?: number
+  }) => api.put('/client-dashboard/preferences', preferences),
+}
+
+export const landingPageCustomizationAPI = {
+  getCustomizationOptions: (id: string) =>
+    api.get(`/landing-pages/${id}/customize`),
+
+  getThemes: () => api.get('/landing-pages/customize/themes'),
+
+  getLayouts: () => api.get('/landing-pages/customize/layouts'),
+
+  getSections: () => api.get('/landing-pages/customize/sections'),
+
+  applyTheme: (id: string, themeId: string) =>
+    api.post(`/landing-pages/${id}/customize/theme`, { theme_id: themeId }),
+
+  createCustomTheme: (id: string, colors: any, themeName?: string) =>
+    api.post(`/landing-pages/${id}/customize/custom-theme`, {
+      colors,
+      theme_name: themeName
+    }),
+
+  changeLayout: (id: string, layoutId: string) =>
+    api.post(`/landing-pages/${id}/customize/layout`, { layout_id: layoutId }),
+
+  updateContentSection: (id: string, sectionName: string, content: any) =>
+    api.put(`/landing-pages/${id}/customize/content/${sectionName}`, content),
+
+  regenerateContentSection: (id: string, sectionName: string, customPrompt?: string) =>
+    api.post(`/landing-pages/${id}/customize/content/${sectionName}/regenerate`, {
+      custom_prompt: customPrompt
+    }),
+
+  previewCustomization: (id: string, changes: {
+    theme_id?: string
+    layout_id?: string
+    content_changes?: any
+    custom_colors?: any
+  }) => api.post(`/landing-pages/${id}/customize/preview`, changes),
+
+  resetToDefaults: (id: string) =>
+    api.post(`/landing-pages/${id}/customize/reset`),
+
+  getAnalytics: (id: string) =>
+    api.get(`/landing-pages/${id}/customize/analytics`),
+}
+
+export const securityAPI = {
+  // OAuth
+  initiateOAuth: (provider: string, redirectUrl?: string) =>
+    api.get(`/security/oauth/${provider}`, { params: { redirectUrl } }),
+
+  // MFA
+  setupMFA: () => api.post('/security/mfa/setup'),
+
+  verifyMFA: (token: string) => api.post('/security/mfa/verify', { token }),
+
+  disableMFA: (password: string) => api.post('/security/mfa/disable', { password }),
+
+  // Session
+  verifySession: (sessionToken: string) =>
+    api.post('/security/verify-session', { sessionToken }),
+}

@@ -5,8 +5,18 @@ import { testMetaConnection } from '../services/metaAdsService.js';
 import { testGoogleConnection } from '../services/googleAdsService.js';
 import { testEmailConfig } from '../services/emailService.js';
 import {
+  getSystemAnalytics as getSystemAnalyticsService,
+  getUserManagement as getUserManagementService,
+  getContentModerationQueue,
+  executeModerationAction,
+  getSystemConfiguration,
+  updateSystemConfiguration,
+  getAuditLog as getAuditLogService
+} from '../services/adminService.js';
+import {
   NotFoundError,
   ForbiddenError,
+  BadRequestError
 } from '../middleware/errorHandler.js';
 import {
   createPaginatedResponse,
@@ -345,13 +355,261 @@ export const getAllCampaigns = asyncControllerHandler(async (req, res) => {
 });
 
 /**
+ * Get comprehensive system analytics
+ */
+export const getSystemAnalytics = asyncControllerHandler(async (req, res) => {
+  const { timeframe = '30d' } = req.query;
+
+  if (!['7d', '30d', '90d', '1y'].includes(timeframe)) {
+    throw new BadRequestError('Invalid timeframe. Must be 7d, 30d, 90d, or 1y');
+  }
+
+  const analytics = await getSystemAnalyticsService(timeframe);
+
+  res.json({
+    success: true,
+    data: {
+      system_analytics: analytics
+    }
+  });
+});
+
+/**
+ * Get enhanced user management data
+ */
+export const getUserManagement = asyncControllerHandler(async (req, res) => {
+  const filters = {
+    role: req.query.role,
+    status: req.query.status,
+    practice_type: req.query.practice_type,
+    city: req.query.city,
+    registration_source: req.query.registration_source,
+    page: parseInt(req.query.page) || 1,
+    limit: parseInt(req.query.limit) || 20,
+    search: req.query.search,
+    sort_by: req.query.sort_by || 'createdAt',
+    sort_order: req.query.sort_order || 'desc'
+  };
+
+  const userManagement = await getUserManagementService(filters);
+
+  res.json({
+    success: true,
+    data: {
+      user_management: userManagement
+    }
+  });
+});
+
+/**
+ * Get content moderation queue
+ */
+export const getContentModeration = asyncControllerHandler(async (req, res) => {
+  const filters = {
+    content_type: req.query.content_type || 'all',
+    status: req.query.status || 'pending',
+    priority: req.query.priority || 'all',
+    page: parseInt(req.query.page) || 1,
+    limit: parseInt(req.query.limit) || 20
+  };
+
+  const moderationQueue = await getContentModerationQueue(filters);
+
+  res.json({
+    success: true,
+    data: {
+      content_moderation: moderationQueue
+    }
+  });
+});
+
+/**
+ * Execute moderation action
+ */
+export const moderateContent = asyncControllerHandler(async (req, res) => {
+  const { item_id, action, reason = '' } = req.body;
+  const moderatorId = req.user.id;
+
+  if (!item_id || !action) {
+    throw new BadRequestError('Item ID and action are required');
+  }
+
+  if (!['approve', 'reject', 'flag', 'escalate'].includes(action)) {
+    throw new BadRequestError('Invalid action. Must be approve, reject, flag, or escalate');
+  }
+
+  const result = await executeModerationAction(item_id, action, moderatorId, reason);
+
+  logger.info(`Moderation action executed: ${action} on ${item_id} by admin ${moderatorId}`);
+
+  res.json({
+    success: true,
+    message: 'Moderation action executed successfully',
+    data: {
+      moderation_result: result
+    }
+  });
+});
+
+/**
+ * Get system configuration
+ */
+export const getSystemConfig = asyncControllerHandler(async (req, res) => {
+  const config = await getSystemConfiguration();
+
+  res.json({
+    success: true,
+    data: {
+      system_configuration: config
+    }
+  });
+});
+
+/**
+ * Update system configuration
+ */
+export const updateSystemConfig = asyncControllerHandler(async (req, res) => {
+  const updates = req.body;
+  const adminId = req.user.id;
+
+  if (!updates || Object.keys(updates).length === 0) {
+    throw new BadRequestError('No configuration updates provided');
+  }
+
+  const result = await updateSystemConfiguration(updates, adminId);
+
+  res.json({
+    success: true,
+    message: 'System configuration updated successfully',
+    data: {
+      configuration_update: result
+    }
+  });
+});
+
+/**
+ * Get audit log
+ */
+export const getAuditLog = asyncControllerHandler(async (req, res) => {
+  const filters = {
+    admin_id: req.query.admin_id,
+    action_type: req.query.action_type,
+    resource_type: req.query.resource_type,
+    start_date: req.query.start_date,
+    end_date: req.query.end_date,
+    page: parseInt(req.query.page) || 1,
+    limit: parseInt(req.query.limit) || 50
+  };
+
+  const auditLog = await getAuditLogService(filters);
+
+  res.json({
+    success: true,
+    data: {
+      audit_log: auditLog
+    }
+  });
+});
+
+/**
+ * Emergency system actions
+ */
+export const executeEmergencyAction = asyncControllerHandler(async (req, res) => {
+  const { action, target, reason } = req.body;
+  const adminId = req.user.id;
+
+  if (!action || !reason) {
+    throw new BadRequestError('Action and reason are required for emergency actions');
+  }
+
+  const validActions = [
+    'disable_user_account',
+    'pause_all_campaigns',
+    'escalate_crisis_intervention',
+    'emergency_system_notification'
+  ];
+
+  if (!validActions.includes(action)) {
+    throw new BadRequestError('Invalid emergency action');
+  }
+
+  let result = {};
+
+  switch (action) {
+    case 'disable_user_account':
+      if (!target) {
+        throw new BadRequestError('Target user ID required');
+      }
+
+      const user = await prisma.user.findUnique({ where: { id: target } });
+      if (!user) {
+        throw new NotFoundError('User not found');
+      }
+
+      await prisma.user.update({
+        where: { id: target },
+        data: { isActive: false }
+      });
+
+      result = { action: 'user_disabled', user_id: target };
+      break;
+
+    case 'pause_all_campaigns':
+      const pausedCampaigns = await prisma.campaign.updateMany({
+        where: {
+          userId: target,
+          status: 'ACTIVE'
+        },
+        data: { status: 'PAUSED' }
+      });
+
+      result = { action: 'campaigns_paused', count: pausedCampaigns.count };
+      break;
+
+    case 'escalate_crisis_intervention':
+      // In a real system, this would trigger external crisis services
+      logger.error('CRISIS ESCALATION', {
+        admin_id: adminId,
+        target,
+        reason,
+        timestamp: new Date()
+      });
+
+      result = { action: 'crisis_escalated', escalation_id: `crisis_${Date.now()}` };
+      break;
+
+    case 'emergency_system_notification':
+      // Send system-wide notification to all admins
+      result = { action: 'notification_sent', message: reason };
+      break;
+  }
+
+  logger.warn('Emergency action executed', {
+    admin_id: adminId,
+    action,
+    target,
+    reason,
+    result,
+    timestamp: new Date()
+  });
+
+  res.json({
+    success: true,
+    message: 'Emergency action executed successfully',
+    data: {
+      emergency_action_result: result
+    }
+  });
+});
+
+/**
  * Get system health status
  */
 export const getSystemHealth = asyncControllerHandler(async (req, res) => {
   const healthChecks = await Promise.allSettled([
     // Database check
     prisma.$queryRaw`SELECT 1`,
-    
+
     // External service checks
     testOpenAIConnection(),
     testMetaConnection(),

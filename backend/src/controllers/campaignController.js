@@ -1,6 +1,7 @@
 import { prisma } from '../utils/database.js';
 import { logger } from '../utils/logger.js';
 import { generateAIContent } from '../services/openaiService.js';
+import { generateCampaignCreatives } from '../services/creativeService.js';
 import { createMetaCampaign, updateMetaCampaign, pauseMetaCampaign } from '../services/metaAdsService.js';
 import { createGoogleCampaign, updateGoogleCampaign, pauseGoogleCampaign } from '../services/googleAdsService.js';
 import {
