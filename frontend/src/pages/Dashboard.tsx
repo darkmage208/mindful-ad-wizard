@@ -171,7 +171,7 @@ export default function Dashboard() {
       </div>
 
       {/* Enhanced Metrics Overview */}
-      <MetricsOverview className="mb-6" />
+      {/* <MetricsOverview className="mb-6" /> */}
 
       {/* Recent Campaigns */}
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
