@@ -8,7 +8,6 @@ import {
   Monitor,
   Smartphone,
   Tablet,
-  X,
   ExternalLink,
   Phone,
   Mail,
@@ -33,7 +32,7 @@ export default function PreviewDialog({ landingPage, open, onOpenChange }: Previ
   }
 
   const handleLiveView = () => {
-    const url = generateLandingPageUrl(landingPage.slug || landingPage.id)
+    const url = generateLandingPageUrl(landingPage.id)
     window.open(url, '_blank')
   }
 
@@ -378,7 +377,7 @@ function LandingPagePreview({ landingPage, previewDevice = 'desktop' }: LandingP
         previewDevice === 'mobile' ? 'py-4' : 'py-6 sm:py-8'
       }`}>
         <div className="max-w-4xl mx-auto text-center text-gray-600 text-xs sm:text-sm">
-          <p>© 2024 {landingPage.name}. All rights reserved.</p>
+          <p>© 2025 {landingPage.name}. All rights reserved.</p>
           {landingPage.seo?.keywords && (
             <p className="mt-1 sm:mt-2">
               Keywords: {landingPage.seo.keywords}

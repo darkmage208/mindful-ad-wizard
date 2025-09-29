@@ -433,7 +433,7 @@ export default function LiveLandingPage() {
         <div className="absolute inset-0 bg-black/60 backdrop-blur-xl"></div>
         <div className="max-w-6xl mx-auto text-center text-white relative z-10">
           <p className="text-sm sm:text-base md:text-lg lg:text-xl drop-shadow-md">
-            © 2024 {landingPage.name}. All rights reserved.
+            © 2025 {landingPage.name}. All rights reserved.
           </p>
           <p className="text-sm sm:text-base md:text-lg mt-2 sm:mt-3 md:mt-4 opacity-75 drop-shadow-sm">
             Powered by Mindful Ad Wizard
