@@ -26,13 +26,13 @@ export default function PreviewDialog({ landingPage, open, onOpenChange }: Previ
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
 
   const deviceClasses = {
-    desktop: 'w-full h-[500px] sm:h-[600px] lg:h-[700px]',
-    tablet: 'w-full max-w-[768px] h-[500px] sm:h-[600px] mx-auto',
-    mobile: 'w-full max-w-[375px] h-[500px] sm:h-[600px] mx-auto',
+    desktop: 'w-full h-[calc(90vh-120px)]',
+    tablet: 'w-full max-w-[768px] h-[calc(90vh-120px)] mx-auto',
+    mobile: 'w-full max-w-[375px] h-[calc(90vh-120px)] mx-auto',
   }
 
   const handleLiveView = () => {
-    const url = generateLandingPageUrl(landingPage.id)
+    const url = generateLandingPageUrl(landingPage.slug)
     window.open(url, '_blank')
   }
 
@@ -87,7 +87,7 @@ export default function PreviewDialog({ landingPage, open, onOpenChange }: Previ
           </div>
         </DialogHeader>
 
-        <div className="flex-1 p-2 sm:p-4 lg:p-6 bg-gray-50 overflow-hidden">
+        <div className="flex-1 p-2 sm:p-4 lg:p-6 bg-gray-50 overflow-hidden min-h-0">
           <div className={`${deviceClasses[previewDevice]} bg-white rounded-lg shadow-lg overflow-hidden border`}>
             <div className="h-full overflow-y-auto">
               <LandingPagePreview landingPage={landingPage} previewDevice={previewDevice} />
@@ -194,7 +194,7 @@ function LandingPagePreview({ landingPage, previewDevice = 'desktop' }: LandingP
             >
               Our Services
             </h2>
-            <div className={`grid gap-3 sm:gap-4 md:gap-6 ${
+            <div className={`grid gap-3 sm:gap-4 md:gap-6 justify-items-center ${
               previewDevice === 'mobile'
                 ? 'grid-cols-1'
                 : previewDevice === 'tablet'
@@ -204,12 +204,12 @@ function LandingPagePreview({ landingPage, previewDevice = 'desktop' }: LandingP
               {content.features.map((feature, index) => (
                 <div
                   key={index}
-                  className={`bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow ${
+                  className={`bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow w-full max-w-sm flex flex-col items-center text-center ${
                     previewDevice === 'mobile' ? 'p-3' : 'p-3 sm:p-4 md:p-6'
                   }`}
                 >
                   <div
-                    className={`rounded-full flex items-center justify-center mb-3 ${
+                    className={`rounded-full flex items-center justify-center mb-3 mx-auto ${
                       previewDevice === 'mobile' ? 'w-10 h-10' : 'w-12 h-12'
                     }`}
                     style={{ backgroundColor: `${colors.accent}20` }}
@@ -248,17 +248,17 @@ function LandingPagePreview({ landingPage, previewDevice = 'desktop' }: LandingP
             >
               What Our Clients Say
             </h2>
-            <div className={`grid gap-4 sm:gap-6 md:gap-8 ${
+            <div className={`grid gap-4 sm:gap-6 md:gap-8 justify-items-center ${
               previewDevice === 'mobile' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'
             }`}>
               {content.testimonials.map((testimonial, index) => (
                 <div
                   key={index}
-                  className={`bg-white rounded-lg shadow-sm border ${
+                  className={`bg-white rounded-lg shadow-sm border w-full max-w-md flex flex-col items-center text-center ${
                     previewDevice === 'mobile' ? 'p-4' : 'p-4 sm:p-6'
                   }`}
                 >
-                  <div className="flex items-center mb-3 sm:mb-4">
+                  <div className="flex items-center justify-center mb-3 sm:mb-4">
                     {[...Array(testimonial.rating)].map((_, i) => (
                       <Star
                         key={i}
@@ -274,7 +274,7 @@ function LandingPagePreview({ landingPage, previewDevice = 'desktop' }: LandingP
                   }`}>
                     "{testimonial.text}"
                   </blockquote>
-                  <cite className="text-sm font-medium text-gray-900">
+                  <cite className="text-sm font-medium text-gray-900 text-center">
                     — {testimonial.author}
                   </cite>
                 </div>

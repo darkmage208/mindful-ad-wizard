@@ -218,11 +218,11 @@ export default function LiveLandingPage() {
             >
               Our Services
             </h2>
-            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-12">
+            <div className="flex flex-wrap justify-center items-stretch gap-4 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-12">
               {content.features.map((feature, index) => (
                 <div
                   key={index}
-                  className="bg-white/10 backdrop-blur-md p-4 sm:p-6 md:p-8 lg:p-10 rounded-xl shadow-2xl border border-white/30 hover:shadow-3xl hover:bg-white/20 transition-all duration-300 hover:transform hover:scale-105 hover:-translate-y-2 w-full sm:w-80 md:w-96 lg:w-80 xl:w-96"
+                  className="bg-white/10 backdrop-blur-md p-4 sm:p-6 md:p-8 lg:p-10 rounded-xl shadow-2xl border border-white/30 hover:shadow-3xl hover:bg-white/20 transition-all duration-300 hover:transform hover:scale-105 hover:-translate-y-2 w-full sm:w-80 md:w-96 lg:w-80 xl:w-96 flex flex-col items-center text-center"
                 >
                   <div
                     className="w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 lg:w-20 lg:h-20 rounded-full flex items-center justify-center mb-4 sm:mb-6 md:mb-8 mx-auto shadow-lg"
@@ -249,7 +249,7 @@ export default function LiveLandingPage() {
         <section className="py-12 sm:py-16 md:py-20 lg:py-24 xl:py-32 px-4 sm:px-6 md:px-8 lg:px-12 relative">
           <div className="absolute inset-0 bg-black/15 backdrop-blur-sm"></div>
           <div className="max-w-7xl mx-auto relative z-10">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 md:gap-16 lg:gap-20 items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 md:gap-16 lg:gap-20 items-center justify-items-center">
               <div className="order-2 lg:order-1">
                 <img
                   src={images.find(img => img.type === 'feature')?.url}
@@ -296,11 +296,11 @@ export default function LiveLandingPage() {
             >
               What Our Clients Say
             </h2>
-            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-12">
+            <div className="flex flex-wrap justify-center items-stretch gap-4 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-12">
               {content.testimonials.map((testimonial, index) => (
                 <div
                   key={index}
-                  className="bg-white/10 backdrop-blur-md p-4 sm:p-6 md:p-8 lg:p-10 rounded-xl shadow-2xl border border-white/30 hover:shadow-3xl hover:bg-white/20 transition-all duration-300 hover:transform hover:scale-105 w-full sm:w-80 md:w-96 lg:w-80 xl:w-96"
+                  className="bg-white/10 backdrop-blur-md p-4 sm:p-6 md:p-8 lg:p-10 rounded-xl shadow-2xl border border-white/30 hover:shadow-3xl hover:bg-white/20 transition-all duration-300 hover:transform hover:scale-105 w-full sm:w-80 md:w-96 lg:w-80 xl:w-96 flex flex-col items-center text-center"
                 >
                   <div className="flex items-center justify-center mb-4 sm:mb-6 md:mb-8">
                     {[...Array(testimonial.rating)].map((_, i) => (
@@ -351,9 +351,9 @@ export default function LiveLandingPage() {
         <div className="absolute inset-0 bg-black/40 backdrop-blur-lg"></div>
         <div className="max-w-7xl mx-auto relative z-10">
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-center mb-8 sm:mb-12 md:mb-16 lg:mb-20 text-white drop-shadow-2xl">Get In Touch</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6 sm:gap-8 md:gap-10 lg:gap-12 xl:gap-16 mb-12 sm:mb-16 md:mb-20">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6 sm:gap-8 md:gap-10 lg:gap-12 xl:gap-16 mb-12 sm:mb-16 md:mb-20 justify-items-center items-stretch">
             {contact.whatsapp && (
-              <div className="text-center p-4 sm:p-6 md:p-8 flex flex-col h-full">
+              <div className="text-center p-4 sm:p-6 md:p-8 flex flex-col h-full w-full max-w-sm justify-center items-center">
                 <div className="flex-1">
                   <MessageCircle className="w-8 sm:w-10 md:w-12 lg:w-14 xl:w-16 h-8 sm:h-10 md:h-12 lg:h-14 xl:h-16 mx-auto mb-4 sm:mb-6 md:mb-8" style={{ color: '#25D366' }} />
                   <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold mb-3 sm:mb-4 md:mb-6 text-white">WhatsApp Us</h3>
@@ -369,7 +369,7 @@ export default function LiveLandingPage() {
             )}
 
             {contact.phone && (
-              <div className="text-center p-4 sm:p-6 md:p-8 flex flex-col h-full">
+              <div className="text-center p-4 sm:p-6 md:p-8 flex flex-col h-full w-full max-w-sm justify-center items-center">
                 <div className="flex-1">
                   <Phone className="w-8 sm:w-10 md:w-12 lg:w-14 xl:w-16 h-8 sm:h-10 md:h-12 lg:h-14 xl:h-16 mx-auto mb-4 sm:mb-6 md:mb-8" style={{ color: colors.accent }} />
                   <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold mb-3 sm:mb-4 md:mb-6 text-white">Call Us</h3>
@@ -385,7 +385,7 @@ export default function LiveLandingPage() {
             )}
 
             {contact.email && (
-              <div className="text-center p-4 sm:p-6 md:p-8 flex flex-col h-full">
+              <div className="text-center p-4 sm:p-6 md:p-8 flex flex-col h-full w-full max-w-sm justify-center items-center">
                 <div className="flex-1">
                   <Mail className="w-8 sm:w-10 md:w-12 lg:w-14 xl:w-16 h-8 sm:h-10 md:h-12 lg:h-14 xl:h-16 mx-auto mb-4 sm:mb-6 md:mb-8" style={{ color: colors.accent }} />
                   <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold mb-3 sm:mb-4 md:mb-6 text-white">Email Us</h3>
@@ -401,7 +401,7 @@ export default function LiveLandingPage() {
             )}
 
             {contact.address && (
-              <div className="text-center p-4 sm:p-6 md:p-8 flex flex-col h-full">
+              <div className="text-center p-4 sm:p-6 md:p-8 flex flex-col h-full w-full max-w-sm justify-center items-center">
                 <div className="flex-1">
                   <MapPin className="w-8 sm:w-10 md:w-12 lg:w-14 xl:w-16 h-8 sm:h-10 md:h-12 lg:h-14 xl:h-16 mx-auto mb-4 sm:mb-6 md:mb-8" style={{ color: colors.accent }} />
                   <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold mb-3 sm:mb-4 md:mb-6 text-white">Visit Us</h3>

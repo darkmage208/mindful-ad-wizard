@@ -76,7 +76,7 @@ export interface LandingPage {
   id: string
   userId: string
   name: string
-  url: string
+  slug: string
   template: string
   colors: {
     primary: string
