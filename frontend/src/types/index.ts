@@ -107,6 +107,11 @@ export interface LandingPage {
     description: string
     keywords: string
   }
+  images?: {
+    url: string
+    alt: string
+    type: 'hero' | 'gallery' | 'feature'
+  }[]
   visits: number
   conversions: number
   isActive: boolean
