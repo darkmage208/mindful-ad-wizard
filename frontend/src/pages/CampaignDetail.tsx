@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { campaignsAPI, leadsAPI } from '@/lib/api'
 import CreativesManager from '@/components/campaigns/CreativesManager'
 import ApprovalsManager from '@/components/campaigns/ApprovalsManager'
+import AdsManager from '@/components/campaigns/AdsManager'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { 
   ArrowLeft, 
@@ -36,7 +37,7 @@ const statusColors = {
 export default function CampaignDetail() {
   const { id } = useParams<{ id: string }>()
   
-  const { data: campaign, isLoading } = useQuery({
+  const { data: campaign, isLoading, refetch } = useQuery({
     queryKey: ['campaign', id],
     queryFn: () => campaignsAPI.getById(id!).then(res => res.data.data?.campaign),
     enabled: !!id,
@@ -190,6 +191,7 @@ export default function CampaignDetail() {
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="ads">Ads Platforms</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="leads">Leads ({campaignLeads.length})</TabsTrigger>
           <TabsTrigger value="creatives">Creatives</TabsTrigger>
@@ -289,6 +291,10 @@ export default function CampaignDetail() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="ads">
+          <AdsManager campaign={campaign} onRefresh={refetch} />
         </TabsContent>
 
         <TabsContent value="performance">
