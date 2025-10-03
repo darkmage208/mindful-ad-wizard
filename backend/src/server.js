@@ -176,7 +176,8 @@ const [
   metricsRoutes,
   clientDashboardRoutes,
   creativeRoutes,
-  approvalRoutes
+  approvalRoutes,
+  adsRoutes
 ] = await Promise.all([
   import('./routes/auth.js').then(m => m.default),
   import('./routes/security.js').then(m => m.default),
@@ -194,6 +195,7 @@ const [
   import('./routes/clientDashboard.js').then(m => m.default),
   import('./routes/creatives.js').then(m => m.default),
   import('./routes/approvals.js').then(m => m.default),
+  import('./routes/ads.js').then(m => m.default),
 ]);
 
 apiRouter.use('/auth', authRoutes);
@@ -212,6 +214,7 @@ apiRouter.use('/admin', adminRoutes);
 apiRouter.use('/analytics', analyticsRoutes);
 apiRouter.use('/metrics', metricsRoutes);
 apiRouter.use('/client-dashboard', clientDashboardRoutes);
+apiRouter.use('/ads', adsRoutes);
 
 app.use('/api', apiRouter);
 

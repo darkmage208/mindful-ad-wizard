@@ -40,15 +40,20 @@ export const createMetaCampaign = async (campaignData) => {
   }
 
   try {
-    // Note: This is a simplified example. In production, you would need:
-    // 1. Valid access token from user's Meta account
-    // 2. Ad account ID
-    // 3. Proper campaign structure with ad sets and ads
-    
-    const adAccountId = process.env.META_AD_ACCOUNT_ID; // Would be dynamic per user
+    // Check for required Meta Ads configuration
+    const adAccountId = process.env.META_AD_ACCOUNT_ID;
+    const accessToken = process.env.META_ACCESS_TOKEN;
+
     if (!adAccountId) {
-      throw new Error('Meta Ad Account ID not configured');
+      throw new Error('Meta Ad Account ID not configured. Please set META_AD_ACCOUNT_ID in your environment variables.');
     }
+
+    if (!accessToken) {
+      throw new Error('Meta Access Token not configured. Please set META_ACCESS_TOKEN in your environment variables.');
+    }
+
+    // Set the access token for this request
+    FacebookAdsApi.setAccessToken(accessToken);
 
     // Create campaign
     const campaign = new Campaign(null, adAccountId);

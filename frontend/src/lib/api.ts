@@ -449,3 +449,78 @@ export const securityAPI = {
   verifySession: (sessionToken: string) =>
     api.post('/security/verify-session', { sessionToken }),
 }
+
+export const adsAPI = {
+  // Test API connections
+  testMetaConnection: () => api.get('/ads/test/meta'),
+  testGoogleConnection: () => api.get('/ads/test/google'),
+
+  // Meta Ads API
+  meta: {
+    createCampaign: (campaignData: {
+      name: string
+      budget: number
+      objectives: string[]
+      targetAudience: string
+      landingPageSlug?: string
+      creatives?: any[]
+      headlines?: string[]
+      descriptions?: string[]
+    }) => api.post('/ads/meta/campaigns', campaignData),
+
+    createLeadGenCampaign: (campaignData: {
+      name: string
+      budget: number
+      targetAudience: string
+      city?: string
+    }) => api.post('/ads/meta/campaigns/leadgen', campaignData),
+
+    updateCampaign: (campaignId: string, updateData: {
+      name?: string
+      status?: string
+      budget?: number
+    }) => api.put(`/ads/meta/campaigns/${campaignId}`, updateData),
+
+    pauseCampaign: (campaignId: string) =>
+      api.post(`/ads/meta/campaigns/${campaignId}/pause`),
+
+    getCampaignMetrics: (campaignId: string) =>
+      api.get(`/ads/meta/campaigns/${campaignId}/metrics`),
+  },
+
+  // Google Ads API
+  google: {
+    createCampaign: (campaignData: {
+      name: string
+      budget: number
+      keywords?: string[]
+      landingPageSlug?: string
+      creatives?: any[]
+      headlines?: string[]
+      descriptions?: string[]
+    }) => api.post('/ads/google/campaigns', campaignData),
+
+    createPsychologyCampaign: (campaignData: {
+      name: string
+      budget: number
+      serviceType?: string
+      city?: string
+      averageTicket?: number
+    }) => api.post('/ads/google/campaigns/psychology', campaignData),
+
+    updateCampaign: (campaignId: string, updateData: {
+      name?: string
+      status?: string
+      budget?: number
+    }) => api.put(`/ads/google/campaigns/${campaignId}`, updateData),
+
+    pauseCampaign: (campaignId: string) =>
+      api.post(`/ads/google/campaigns/${campaignId}/pause`),
+
+    getCampaignMetrics: (campaignId: string) =>
+      api.get(`/ads/google/campaigns/${campaignId}/metrics`),
+
+    getKeywordSuggestions: (targetAudience: string) =>
+      api.post('/ads/google/keywords/suggestions', { targetAudience }),
+  },
+}
