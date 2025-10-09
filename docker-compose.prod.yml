@@ -4,6 +4,8 @@ services:
   postgres:
     image: postgres:15-alpine
     restart: unless-stopped
+    env_file:
+      - .env.prod
     environment:
       POSTGRES_DB: mindful_ad_wizard
       POSTGRES_USER: mindful_user
@@ -40,6 +42,8 @@ services:
       dockerfile: Dockerfile
       target: production
     restart: unless-stopped
+    env_file:
+      - .env.prod
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://mindful_user:${POSTGRES_PASSWORD}@postgres:5432/mindful_ad_wizard
@@ -81,6 +85,8 @@ services:
       args:
         - VITE_API_URL=https://autonomiapro.com.br/api
     restart: unless-stopped
+    env_file:
+      - .env.prod
     depends_on:
       - backend
     networks:

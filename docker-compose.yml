@@ -4,6 +4,8 @@ services:
   postgres:
     image: postgres:15-alpine
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       POSTGRES_DB: mindful_ad_wizard
       POSTGRES_USER: mindful_user
@@ -47,6 +49,8 @@ services:
     dns:
       - 8.8.8.8
       - 8.8.4.4
+    env_file:
+      - .env
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://mindful_user:${POSTGRES_PASSWORD:-dev_password}@postgres:5432/mindful_ad_wizard
@@ -89,6 +93,8 @@ services:
       args:
         - VITE_API_URL=${VITE_API_URL:-http://localhost:5000/api}
     restart: unless-stopped
+    env_file:
+      - .env
     ports:
       - "${FRONTEND_PORT:-3000}:80"
     depends_on:
@@ -101,6 +107,8 @@ services:
   pgadmin:
     image: dpage/pgadmin4:latest
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@example.com}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
