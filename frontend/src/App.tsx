@@ -57,7 +57,7 @@ function App() {
             <Route path="/landing-pages/:id/edit" element={<NewLandingPage />} />
             <Route path="/ai-chat" element={<AIChat />} />
             <Route path="/settings" element={<Settings />} />
-            {user.role === 'admin' && (
+            {user.role === 'ADMIN' && (
               <Route path="/admin" element={<AdminPanel />} />
             )}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />

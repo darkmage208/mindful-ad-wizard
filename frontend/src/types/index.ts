@@ -2,7 +2,7 @@ export interface User {
   id: string
   name: string
   email: string
-  role: 'client' | 'admin'
+  role: 'CLIENT' | 'ADMIN' | 'SUPER_ADMIN'
   createdAt: Date
   avatar?: string
 }

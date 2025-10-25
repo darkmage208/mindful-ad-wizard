@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { ReactNode, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
@@ -27,8 +27,8 @@ import {
   Shield,
   Calendar,
   Clock,
+  ShieldCheck,
 } from 'lucide-react'
-import { useState } from 'react'
 
 interface LayoutProps {
   children: ReactNode
@@ -41,6 +41,10 @@ const navigation = [
   { name: 'Landing Pages', href: '/landing-pages', icon: Globe, description: 'Page builder' },
   { name: 'AI Assistant', href: '/ai-chat', icon: MessageCircle, description: 'Smart recommendations' },
   { name: 'Settings', href: '/settings', icon: Settings, description: 'Account preferences' },
+]
+
+const adminNavigation = [
+  { name: 'Admin Panel', href: '/admin', icon: ShieldCheck, description: 'System administration' },
 ]
 
 export default function Layout({ children }: LayoutProps) {
@@ -100,6 +104,36 @@ export default function Layout({ children }: LayoutProps) {
                 </Link>
               )
             })}
+            
+            {/* Admin Navigation - Mobile */}
+            {user.role === 'ADMIN' && (
+              <div className="mt-6 pt-6 border-t border-border">
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-3">
+                  Administration
+                </div>
+                {adminNavigation.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`sidebar-item mb-1 ${
+                        isActive(item.href)
+                          ? 'sidebar-item-active'
+                          : 'sidebar-item-inactive'
+                      }`}
+                    >
+                      <Icon className="mr-3 w-5 h-5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium">{item.name}</div>
+                        <div className="text-xs opacity-75">{item.description}</div>
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            )}
           </nav>
 
           {/* Mobile menu footer */}
@@ -150,6 +184,35 @@ export default function Layout({ children }: LayoutProps) {
                 </Link>
               )
             })}
+            
+            {/* Admin Navigation */}
+            {user.role === 'ADMIN' && (
+              <div className="mt-6 pt-6 border-t border-border">
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-3">
+                  Administration
+                </div>
+                {adminNavigation.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className={`sidebar-item mb-1 ${
+                        isActive(item.href)
+                          ? 'sidebar-item-active'
+                          : 'sidebar-item-inactive'
+                      }`}
+                    >
+                      <Icon className="mr-3 w-5 h-5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium">{item.name}</div>
+                        <div className="text-xs opacity-75">{item.description}</div>
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            )}
           </nav>
 
           {/* Sidebar Footer */}
