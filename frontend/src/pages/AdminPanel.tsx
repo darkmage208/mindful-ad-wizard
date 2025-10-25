@@ -428,14 +428,14 @@ export default function AdminPanel() {
 
         <TabsContent value="system" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <Card>
+            <Card className='flex flex-col'>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Settings className="h-5 w-5" />
                   <span>System Configuration</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="flex flex-col justify-between h-full space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">AI Generation Limit</span>
