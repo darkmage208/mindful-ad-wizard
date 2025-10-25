@@ -7,7 +7,9 @@ import {
   getUserById,
   updateUser,
   deleteUser,
+  addUser,
   getAllCampaigns,
+  updateCampaign,
   getSystemHealth,
   getSystemAnalytics,
   getUserManagement,
@@ -32,6 +34,7 @@ router.get('/health', asyncHandler(getSystemHealth));
 
 // Enhanced user management
 router.get('/users', asyncHandler(getUsers));
+router.post('/users', asyncHandler(addUser));
 router.get('/user-management', asyncHandler(getUserManagement));
 router.get('/users/:id', asyncHandler(getUserById));
 router.put('/users/:id', asyncHandler(updateUser));
@@ -39,6 +42,7 @@ router.delete('/users/:id', asyncHandler(deleteUser));
 
 // Campaign oversight
 router.get('/campaigns', asyncHandler(getAllCampaigns));
+router.put('/campaigns/:id', asyncHandler(updateCampaign));
 
 // Content moderation
 router.get('/moderation', asyncHandler(getContentModeration));

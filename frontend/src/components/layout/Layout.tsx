@@ -25,8 +25,6 @@ import {
   Search,
   HelpCircle,
   Shield,
-  Calendar,
-  Clock,
   ShieldCheck,
 } from 'lucide-react'
 
@@ -106,7 +104,7 @@ export default function Layout({ children }: LayoutProps) {
             })}
             
             {/* Admin Navigation - Mobile */}
-            {user.role === 'ADMIN' && (
+            {user && user.role === 'ADMIN' && (
               <div className="mt-6 pt-6 border-t border-border">
                 <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-3">
                   Administration
@@ -186,7 +184,7 @@ export default function Layout({ children }: LayoutProps) {
             })}
             
             {/* Admin Navigation */}
-            {user.role === 'ADMIN' && (
+            {user && user.role === 'ADMIN' && (
               <div className="mt-6 pt-6 border-t border-border">
                 <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-3">
                   Administration

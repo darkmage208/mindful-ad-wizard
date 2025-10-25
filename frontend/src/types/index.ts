@@ -123,3 +123,6 @@ export interface LandingPage {
     conversionRate: number
   }
 }
+
+// Re-export admin types
+export * from './admin'

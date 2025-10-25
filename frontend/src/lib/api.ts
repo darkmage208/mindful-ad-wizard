@@ -208,7 +208,12 @@ export const adminAPI = {
   getUserById: (id: string) => api.get(`/admin/users/${id}`),
   updateUser: (id: string, data: unknown) => api.put(`/admin/users/${id}`, data),
   deleteUser: (id: string) => api.delete(`/admin/users/${id}`),
+  addUser: (data: unknown) => api.post('/admin/users', data),
   getAllCampaigns: () => api.get('/admin/campaigns'),
+  updateCampaign: (id: string, data: unknown) => api.put(`/admin/campaigns/${id}`, data),
+  getConfig: () => api.get('/admin/config'),
+  updateConfig: (data: unknown) => api.put('/admin/config', data),
+  getAnalytics: () => api.get('/admin/analytics'),
 }
 
 export const usersAPI = {
